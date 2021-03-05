@@ -3,7 +3,7 @@
 set -e
 trap 'echo ERROR on line number $LINENO' ERR
 
-repo="https://github.com/wiedehopf/graphs1090"
+repo="https://github.com/bing281/graphs1090"
 ipath=/usr/share/graphs1090
 install=0
 
