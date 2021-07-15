@@ -9,8 +9,11 @@ Also works for other dump1090 variants supplying stats.json
 
 ## Installation / Update to current version:
 ```
-sudo bash -c "$(wget -nv -O - https://raw.githubusercontent.com/wiedehopf/graphs1090/master/install.sh)"
+sudo bash -c "$(curl -L -o - https://github.com/wiedehopf/graphs1090/raw/master/install.sh)"
 ```
+
+Note on data loss: When removing or losing power you will lose graph data generated after 23:42 of the previous day.
+To avoid that issue `sudo shutdown now` before unplugging the pi. See the section on reducing writes for more detail.
 
 ## Configuration (optional):
 Edit the configuration file to change graph layout options, for example size:
@@ -56,8 +59,23 @@ For the piaware image you'll need to configure the location on the online FA sta
 ### Reducing writes to the sd-card (enabled by default)
 
 To reduce writes to the sd-card, data is only written to the sd-card every 24h.
-A power outage will cause up to 24h of data loss which usually isn't a big deal.
+Note on data loss: When removing or losing power you will lose graph data generated after 23:42 of the previous day.
+To avoid that issue `sudo shutdown now` before unplugging the pi. See the section on reducing writes for more detail.
 Reboots or shutdowns are not an issue and don't cause data loss.
+
+If you want to change how often the data is written to disk, edit `/etc/cron.d/collectd_to_disk` and replace the content with one of the following options:
+(updating / running the graphs1090 install script will overwrite this to the default)
+```
+
+# every day at 23:42
+42 23 * * * root /bin/systemctl restart collectd
+
+# every Sunday
+42 23 * * 0 root /bin/systemctl restart collectd
+
+# every 6 hours
+42 */6 * * * root /bin/systemctl restart collectd
+```
 
 To disable this behaviour use this command:
 ```
@@ -136,7 +154,7 @@ This might be a good idea if you changed from the adsb receiver project graphs a
 Also if you upgraded at a somewhen July 15th to July 16th 2019. Had a bad setting removing maximum data keeping for some part of the data.
 
 ```
-sudo bash -c "$(wget -nv -O - https://raw.githubusercontent.com/wiedehopf/graphs1090/master/install.sh)"
+sudo bash -c "$(curl -L -o - https://github.com/wiedehopf/graphs1090/raw/master/install.sh)"
 sudo apt update
 sudo apt install -y screen
 sudo screen /usr/share/graphs1090/new-format.sh
@@ -226,7 +244,7 @@ sudo ln -s /run/dump1090-fa /usr/local/share/dump1090-data/data
 
 ```
 cd /var/lib/collectd/rrd
-sudo bash /usr/share/graphs1090/gunzip.sh
+sudo /usr/share/graphs1090/gunzip.sh /var/lib/collectd/rrd/localhost
 sudo tar cf rrd.tar localhost
 cp rrd.tar /tmp
 ```
@@ -248,6 +266,7 @@ sudo mkdir -p /var/lib/collectd/rrd/
 cd /var/lib/collectd/rrd
 sudo cp /tmp/rrd.tar /var/lib/collectd/rrd/
 sudo systemctl stop collectd
+sudo /usr/share/graphs1090/gunzip.sh /var/lib/collectd/rrd/localhost
 sudo tar xf rrd.tar
 sudo systemctl restart collectd graphs1090
 ```
@@ -294,4 +313,13 @@ Undoing the solution if the logs still show failure or when the issue has been f
 ```
 sudo sed -i -e 's#LD_PRELOAD=/usr/lib/python3.8.*##' /etc/default/collectd
 sudo systemctl restart collectd
+```
+
+
+### Wipe the database (delete ALL DATA !!! be certain you want this)
+
+```
+sudo systemctl stop collectd
+sudo rm /var/lib/collectd/rrd/localhost -rf
+sudo systemctl restart collectd graphs1090
 ```

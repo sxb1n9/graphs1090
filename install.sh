@@ -84,7 +84,7 @@ fi
 
 cp dump1090.db dump1090.py system_stats.py LICENSE $ipath
 cp *.sh $ipath
-cp malarky.service $ipath
+cp malarky.conf $ipath
 chmod u+x $ipath/*.sh
 if ! grep -e 'system_stats' -qs /etc/collectd/collectd.conf &>/dev/null; then
 	cp /etc/collectd/collectd.conf /etc/collectd/collectd.conf.graphs1090 &>/dev/null || true
@@ -95,6 +95,23 @@ if ! grep -e 'system_stats' -qs /etc/collectd/collectd.conf &>/dev/null; then
 fi
 sed -i -e 's/XFF.*/XFF 0.8/' /etc/collectd/collectd.conf
 sed -i -e 's/skyview978/skyaware978/' /etc/collectd/collectd.conf
+
+# unlisted interfaces
+for path in /sys/class/net/*
+do
+    iface=$(basename $path)
+    # no action on existing interfaces
+    fgrep -q 'Interface "'$iface'"' /etc/collectd/collectd.conf && continue
+    # only add interface starting with et en and wl
+    case $iface in
+        et*|en*|wl*)
+sed -ie '/<Plugin "interface">/{a\
+    Interface "'$iface'"
+}' /etc/collectd/collectd.conf
+        ;;
+    esac
+done
+
 rm -f /etc/cron.d/cron-graphs1090
 cp -r html $ipath
 cp -n default /etc/default/graphs1090
@@ -131,19 +148,19 @@ SYM=/usr/share/graphs1090/data-symlink
 mkdir -p $SYM
 if [ -f /run/dump1090-fa/stats.json ]; then
     ln -snf /run/dump1090-fa $SYM/data
-    sed -i 's?URL "http://local.*?URL "http://localhost/dump1090-fa"?' /etc/collectd/collectd.conf
+    sed -i -e 's?URL .*?URL "file:///usr/share/graphs1090/data-symlink"?' /etc/collectd/collectd.conf
 elif [ -f /run/readsb/stats.json ]; then
     ln -snf /run/readsb $SYM/data
-    sed -i 's?URL "http://local.*?URL "http://localhost/radar"?' /etc/collectd/collectd.conf
+    sed -i -e 's?URL .*?URL "file:///usr/share/graphs1090/data-symlink"?' /etc/collectd/collectd.conf
 elif [ -f /run/adsbexchange-feed/stats.json ]; then
     ln -snf /run/adsbexchange-feed $SYM/data
-    sed -i 's?URL "http://local.*?URL "http://localhost/tar1090"?' /etc/collectd/collectd.conf
+    sed -i -e 's?URL .*?URL "file:///usr/share/graphs1090/data-symlink"?' /etc/collectd/collectd.conf
 elif [ -f /run/dump1090/stats.json ]; then
     ln -snf /run/dump1090 $SYM/data
-    sed -i 's?URL "http://local.*?URL "http://localhost/dump1090"?' /etc/collectd/collectd.conf
+    sed -i -e 's?URL .*?URL "file:///usr/share/graphs1090/data-symlink"?' /etc/collectd/collectd.conf
 elif [ -f /run/dump1090-mutability/stats.json ]; then
     ln -snf /run/dump1090-mutability $SYM/data
-    sed -i 's?URL "http://local.*?URL "http://localhost/dump1090"?' /etc/collectd/collectd.conf
+    sed -i -e 's?URL .*?URL "file:///usr/share/graphs1090/data-symlink"?' /etc/collectd/collectd.conf
 else
 	echo --------------
 	echo "Non-standard configuration detected, you need to change the data URL in /etc/collectd/collectd.conf!"
@@ -154,11 +171,10 @@ SYM=/usr/share/graphs1090/978-symlink
 mkdir -p $SYM
 if [ -f /run/skyaware978/aircraft.json ]; then
     ln -snf /run/skyaware978 $SYM/data
-    sed -i 's?URL_978.*?URL_978 "file:///usr/share/graphs1090/978-symlink"?' /etc/collectd/collectd.conf
-elif wget -O /dev/null http://localhost/skyaware978/data/aircraft.json 2>/dev/null; then
-    sed -i 's?URL_978.*?URL_978 "http://localhost/skyaware978"?' /etc/collectd/collectd.conf
-elif wget -O /dev/null http://localhost/978/data/aircraft.json 2>/dev/null; then
-    sed -i 's?URL_978.*?URL_978 "http://localhost/978"?' /etc/collectd/collectd.conf
+    sed -i -e 's?URL_978 .*?URL_978 "file:///usr/share/graphs1090/978-symlink"?' /etc/collectd/collectd.conf
+elif [ -f /run/adsbexchange-978/aircraft.json ]; then
+    ln -snf /run/adsbexchange-978 $SYM/data
+    sed -i -e 's?URL_978 .*?URL_978 "file:///usr/share/graphs1090/978-symlink"?' /etc/collectd/collectd.conf
 fi
 
 if grep jessie /etc/os-release >/dev/null

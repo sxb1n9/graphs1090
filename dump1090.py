@@ -265,10 +265,11 @@ def read_1090(data):
                    values = [stats['total']['cpu'][k]])
 
     #airspy cpu usage
-    p = subprocess.Popen("PID=$(systemctl show -p MainPID airspy_adsb | cut -f 2 -d=); cat /proc/$PID/task/$(ls /proc/$PID/task | awk NR==3)/stat | cut -d ' ' -f 14,15 && getconf CLK_TCK",
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        shell=True)
+    cmdString = "PID=$(systemctl show -p MainPID airspy_adsb | cut -f 2 -d=); cat /proc/$PID/task/$(ls /proc/$PID/task | awk NR==3)/stat | cut -d ' ' -f 14,15 && getconf CLK_TCK"
+    if (sys.version_info > (3, 0)):
+        p = subprocess.Popen(cmdString, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+    else:
+        p = subprocess.Popen(cmdString, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
     out, err = p.communicate()
 
@@ -303,8 +304,8 @@ def read_1090(data):
     ranges = []
 
     for a in aircraft_data['aircraft']:
-        if a['seen'] < 30: total += 1
-        if has_key(a,'seen_pos') and a['seen_pos'] < 30:
+        if a['seen'] < 60: total += 1
+        if has_key(a,'seen_pos') and a['seen_pos'] < 60:
             with_pos += 1
             if rlat is not None:
                 distance = greatcircle(rlat, rlon, a['lat'], a['lon'])
