@@ -2,6 +2,10 @@
 # sudo systemctl restart graphs1090
 # to update the graphs and web interface
 
+# how often graphs are drawn in seconds (default: 60)
+# other graphs are drawn at certain multiples of this interval (2h: 2x 8h: 4x 24h: 8x 48h: 16x 7d: 32x ....)
+DRAW_INTERVAL=60
+
 # set to 1 to enable farenheit instead of celsius
 farenheit=0
 
@@ -9,6 +13,9 @@ farenheit=0
 range=nautical
 # set the right axis unit: (leftaxis, nautical, statute, metric)
 range2=leftaxis
+
+# colorscheme, options so far: default, dark
+colorscheme=default
 
 # set graph size, possible values: small, default, large, huge, custom
 graph_size=default
@@ -50,6 +57,10 @@ ul_maxima=
 ul_rate_per_aircraft=
 ul_adsb_cpu=
 ul_range_uat=
+# set custom lower limit for signal graph
+ll_signal=
+
+ul_airspy_misc=
 
 # set custom left / right axis ratio
 # leave blank for default of 10
@@ -58,5 +69,19 @@ lr_rate_per_aircraft=
 # set custom position / messages axis scaling ratio
 # leave blank for a default of 0.1
 position_scaling=
+
+# disk stats displayed for device (i.e. mmc0 sda sdc)
+disk=
+
+# net stats displayed for these two devices (i.e. wlp3s0 wlan0 eth0 enp0s25)
+ether=
+wifi=
+
+
+# set time zone for rrdtool graphs
+#export TZ=Europe/Berlin
+
+# set temperature multiplier, on the pi this is 1000, on some platforms you might need to set it to 1
+TEMP_MULTIPLIER=1000
 
 DB=/var/lib/collectd/rrd

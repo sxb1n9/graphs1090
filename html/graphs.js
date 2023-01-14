@@ -30,7 +30,7 @@ function switchView(newTimeFrame) {
     $timeFrame = newTimeFrame;
 
     // Set the timestamp variable to be used in querystring.
-    $timestamp = new Date().getTime() / 1000
+    $timestamp = Math.round(new Date().getTime() / 1000 / 15) * 15;
 
     // Display images for the requested time frame and create links to full sized images for the requested time frame.
     var element;
@@ -72,6 +72,26 @@ function switchView(newTimeFrame) {
 
     $("#dump1090-cpu-image").attr("src", "graphs/dump1090-" + $hostName + "-cpu-" + $timeFrame + ".png?time=" + $timestamp);
     $("#dump1090-cpu-link").attr("href", "graphs/dump1090-" + $hostName + "-cpu-" + $timeFrame + ".png?time=" + $timestamp);
+
+    $("#dump1090-misc-image").attr("src", "graphs/dump1090-" + $hostName + "-misc-" + $timeFrame + ".png?time=" + $timestamp);
+    $("#dump1090-misc-link").attr("href", "graphs/dump1090-" + $hostName + "-misc-" + $timeFrame + ".png?time=" + $timestamp);
+
+    if ($("#panel_airspy").css("display") !== "none") {
+        $("#airspy-rssi-image").attr("src", "graphs/airspy-" + $hostName + "-rssi-" + $timeFrame + ".png?time=" + $timestamp);
+        $("#airspy-rssi-link").attr("href", "graphs/airspy-" + $hostName + "-rssi-" + $timeFrame + ".png?time=" + $timestamp);
+
+        $("#airspy-snr-image").attr("src", "graphs/airspy-" + $hostName + "-snr-" + $timeFrame + ".png?time=" + $timestamp);
+        $("#airspy-snr-link").attr("href", "graphs/airspy-" + $hostName + "-snr-" + $timeFrame + ".png?time=" + $timestamp);
+
+        $("#airspy-noise-image").attr("src", "graphs/airspy-" + $hostName + "-noise-" + $timeFrame + ".png?time=" + $timestamp);
+        $("#airspy-noise-link").attr("href", "graphs/airspy-" + $hostName + "-noise-" + $timeFrame + ".png?time=" + $timestamp);
+
+        $("#airspy-misc-image").attr("src", "graphs/airspy-" + $hostName + "-misc-" + $timeFrame + ".png?time=" + $timestamp);
+        $("#airspy-misc-link").attr("href", "graphs/airspy-" + $hostName + "-misc-" + $timeFrame + ".png?time=" + $timestamp);
+
+        $("#df_counts-image").attr("src", "graphs/df_counts-" + $hostName + "-" + $timeFrame + ".png?time=" + $timestamp);
+        $("#df_counts-link").attr("href", "graphs/df_counts-" + $hostName + "-" + $timeFrame + ".png?time=" + $timestamp);
+    }
 
 	if ($("#panel_978").css("display") !== "none") {
 		$("#dump1090-aircraft_978-image").attr("src", "graphs/dump1090-" + $hostName + "-aircraft_978-" + $timeFrame + ".png?time=" + $timestamp);
@@ -137,5 +157,7 @@ function switchView(newTimeFrame) {
     $("#btn-365d").removeClass('active');
     $("#btn-730d").removeClass('active');
     $("#btn-1095d").removeClass('active');
+    $("#btn-1825d").removeClass('active');
+    $("#btn-3650d").removeClass('active');
     $("#btn-" + $timeFrame).addClass('active');
 }

@@ -2,6 +2,7 @@
 
 ipath=/usr/share/graphs1090
 systemctl stop collectd
+systemctl disable --now graphs1090
 
 /usr/share/graphs1090/gunzip.sh /var/lib/collectd/rrd/localhost
 
@@ -11,8 +12,6 @@ mv /etc/collectd/collectd.conf.graphs1090 /etc/collectd/collectd.conf &>/dev/nul
 rm -f /etc/cron.d/cron-graphs1090
 
 lighty-disable-mod graphs1090 >/dev/null
-
-apt-get remove -y $(ls $ipath/installed)
 
 systemctl daemon-reload
 systemctl restart collectd

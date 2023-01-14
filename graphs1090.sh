@@ -2,16 +2,21 @@
 
 DOCUMENTROOT=/run/graphs1090
 
+DB=/var/lib/collectd/rrd
+# settings in /etc/default/graphs1090 will overwrite the DB directory
+
 renice -n 19 -p $$
 
-trap 'echo ERROR on line number $LINENO' ERR
+trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
 
 mult() {
-	echo $1 $2 | awk '{printf "%.9f", $1 * $2}'
+	echo $1 $2 | LC_ALL=C awk '{printf "%.9f", $1 * $2}'
 }
 div() {
-	echo $1 $2 | awk '{printf "%.9f", $1 / $2}'
+	echo $1 $2 | LC_ALL=C awk '{printf "%.9f", $1 / $2}'
 }
+
+TEMP_MULTIPLIER=1000
 
 lwidth=1096
 #1096 or 960
@@ -22,25 +27,96 @@ sheight=324
 font_size=10.0
 graph_size=default
 
+# default colorscheme
+colors=""
+
+CANVAS=FFFFFF
+
+LGREEN=7de87d
 GREEN=32CD32
 DGREEN=228B22
+
+LBLUE=4f59e3
 BLUE=0011EE
 ABLUE=0022DD
 DBLUE=0033AA
+
+LCYAN=29a7e6
 CYAN=00A0F0
+
 RED=E30022
 DRED=990000
 LRED=FFCCCB
 
-DB=/var/lib/collectd/rrd
-# settings in /etc/default/graphs1090 will overwrite the DB directory
+LIGHTYELLOW=FFFF99
+AYELLOW=ffcc00
+
+
+AGRAY=dddddd
+
 
 source /etc/default/graphs1090
 
-ether="$(ls ${DB}/localhost | grep interface -m1)"
-wifi="$(ls ${DB}/localhost | grep interface -m2 | tail -n1)"
+if [[ "$colorscheme" == "dark" ]]; then
+    CANVAS=161618
+    colors="\
+        -c CANVAS#$CANVAS \
+        -c BACK#2a2e31 \
+        -c FONT#f2f5f4 \
+        -c AXIS#f2f5f4 \
+        -c FRAME#888888 \
+        -c GRID#444444 \
+        -c MGRID#444444 \
+        -c SHADEA#212427 \
+        -c SHADEB#171a1c \
+        "
 
-disk="$(ls ${DB}/localhost | grep disk -m1)"
+    LGREEN=1db992
+    DGREEN=5cb85c
+    GREEN=3d532d
+
+    GREEN=386619
+
+
+
+    LBLUE=7fc7ff
+    BLUE=1cb992
+    ABLUE=0c5685
+    DBLUE=10366f
+
+    CYAN=00A0F0
+    LCYAN=29a7e6
+
+    RED=c52b2f
+    DRED=c52b2f
+    LRED=a6595c
+
+    LIGHTYELLOW=444444
+    AYELLOW=cca300
+
+
+    AGRAY=2a2e31
+fi
+
+source /etc/default/graphs1090
+
+if [[ -n $ether ]]; then
+    ether="interface-${ether}"
+else
+    ether="$(ls ${DB}/localhost | grep -v 'interface-lo' | grep interface -m1)"
+fi
+
+if [[ -n $wifi ]]; then
+    wifi="interface-${wifi}"
+else
+    wifi="$(ls ${DB}/localhost | grep -v 'interface-lo' | grep interface -m2 | tail -n1)"
+fi
+
+if [[ -n $disk ]]; then
+    disk="disk-${disk}"
+else
+    disk="$(ls ${DB}/localhost | grep disk -m1)"
+fi
 
 
 if ! [ $position_scaling ]; then
@@ -70,13 +146,17 @@ esac
 
 fontsize="-n TITLE:$(mult 1.1 $font_size):. -n AXIS:$(mult 0.8 $font_size):. -n UNIT:$(mult 0.9 $font_size):. -n LEGEND:$(mult 0.9 $font_size):."
 grid="-c GRID#FFFFFF --grid-dash 2:1"
-options="$grid $fontsize -e $(date +%H:%M)"
+options="$grid $fontsize -e $(date +%H:%M) $colors"
 small="$options -D --width $swidth --height $sheight"
 big="$options --width $lwidth --height $lheight"
 
 if [[ $all_large == "yes" ]]; then
 	small="$options --width $lwidth --height $lheight"
 fi
+
+
+# load bash sleep builtin if available
+[[ -f /usr/lib/bash/sleep ]] && enable -f /usr/lib/bash/sleep sleep || true
 
 pre="sleep 0.01"
 if ! [ -z "$2" ]; then
@@ -199,6 +279,7 @@ cpu_graph_dump1090() {
 		--right-axis 1:0 \
 		--left-axis-format "%.0lf" \
 		--right-axis-format "%.0lf" \
+        --units-exponent 0 \
 		"DEF:demod=$(check $2/dump1090_cpu-demod.rrd):value:AVERAGE" \
 		"CDEF:demodp=demod,10,/" \
 		"DEF:reader=$(check $2/dump1090_cpu-reader.rrd):value:AVERAGE" \
@@ -208,8 +289,8 @@ cpu_graph_dump1090() {
 		$airspy_graph1 \
 		$airspy_graph2 \
 		$airspy_graph3 \
-		"AREA:readerp#008000:USB" \
-		"AREA:backgroundp#00C000:Other:STACK" \
+		"AREA:readerp#$LGREEN:USB" \
+		"AREA:backgroundp#$DGREEN:Other:STACK" \
 		"AREA:demodp#$GREEN:Demodulator\c:STACK" \
 		"COMMENT: \n" \
 		--watermark "Drawn: $nowlit";
@@ -233,6 +314,7 @@ tracks_graph() {
 		--right-axis 1:0 \
 		--left-axis-format "%.0lf" \
 		--right-axis-format "%.0lf" \
+        --units-exponent 0 \
 		"DEF:all=$(check $2/dump1090_tracks-all.rrd):value:AVERAGE" \
 		"DEF:single=$(check $2/dump1090_tracks-single_message.rrd):value:AVERAGE" \
 		"SHIFT:single:-60" \
@@ -271,6 +353,7 @@ cpu_graph() {
 		--upper-limit 5 \
 		--left-axis-format "%.0lf" \
 		--right-axis-format "%.0lf" \
+        --units-exponent 0 \
 		--pango-markup \
 		"DEF:idle=$(check $2/cpu-idle.rrd):value:AVERAGE" \
 		"DEF:interrupt=$(check $2/cpu-interrupt.rrd):value:AVERAGE" \
@@ -289,9 +372,9 @@ cpu_graph() {
 		"CDEF:psystem=100,system,*,all,/" \
 		"CDEF:puser=100,user,*,all,/" \
 		"CDEF:pwait=100,wait,*,all,/" \
-		"AREA:pinterrupt#$BLUE:irq" \
+		"AREA:pinterrupt#$ABLUE:irq" \
 		"AREA:psoftirq#$DBLUE:softirq:STACK" \
-		"AREA:psteal#$BLUE:steal:STACK" \
+		"AREA:psteal#$ABLUE:steal:STACK" \
 		"AREA:pwait#C00000:io:STACK" \
 		"AREA:psystem#$RED:sys:STACK" \
 		"AREA:puser#$GREEN:user:STACK" \
@@ -349,7 +432,7 @@ disk_io_iops_graph() {
 		"GPRINT:read:AVERAGE:Avg\:%4.1lf iops" \
 		"GPRINT:read:LAST:Current\:%4.1lf iops\c" \
 		"TEXTALIGN:center" \
-		"AREA:write_neg#$BLUE:Writes" \
+		"AREA:write_neg#$ABLUE:Writes" \
 		"LINE1:write_neg#$DBLUE" \
 		"GPRINT:write:MAX:Max\:%4.1lf iops" \
 		"GPRINT:write:AVERAGE:Avg\:%4.1lf iops" \
@@ -370,9 +453,9 @@ disk_io_octets_graph() {
 		--right-axis 1:0 \
 		--upper-limit 10 \
 		--lower-limit -10 \
-		--units-exponent 0 \
 		--left-axis-format "%.0lf" \
 		--right-axis-format "%.0lf" \
+		--units-exponent 0 \
 		-A \
 		"TEXTALIGN:center" \
 		"DEF:read_b=$(check $2/disk_octets.rrd):read:AVERAGE" \
@@ -386,7 +469,7 @@ disk_io_octets_graph() {
 		"GPRINT:read_b:AVERAGE:Avg\: %4.1lf %sB/sec" \
 		"GPRINT:read_b:LAST:Current\: %4.1lf %sB/sec\c" \
 		"TEXTALIGN:center" \
-		"AREA:write_neg#$BLUE:Writes" \
+		"AREA:write_neg#$ABLUE:Writes" \
 		"LINE1:write_neg#$DBLUE" \
 		"GPRINT:write_b:MAX:Max\: %4.1lf %sB/sec" \
 		"GPRINT:write_b:AVERAGE:Avg\: %4.1lf %sB/sec" \
@@ -445,9 +528,9 @@ memory_graph() {
 		"GPRINT:used:LAST:%4.1lf%s" \
 		"AREA:buffers#$ABLUE:Buffers\::STACK" \
 		"GPRINT:buffers:LAST:%4.1lf%s\c" \
-		"AREA:cached#ffdd99:Cache\::STACK" \
+		"AREA:cached#$LIGHTYELLOW:Cache\::STACK" \
 		"GPRINT:cached:LAST:%4.1lf%s" \
-		"AREA:free#dddddd:Unused\::STACK" \
+		"AREA:free#$AGRAY:Unused\::STACK" \
 		"GPRINT:free:LAST:%4.1lf%s\c" \
 		--watermark "Drawn: $nowlit";
 	mv "$1.tmp" "$1"
@@ -455,6 +538,7 @@ memory_graph() {
 
 
 network_graph() {
+	$pre
 	if [[ $(ls ${DB}/localhost | grep interface -c) < 2 ]]
 	then
 		interfaces=(\
@@ -469,7 +553,6 @@ network_graph() {
 			"CDEF:rx_b=rx1,rx2,ADDNAN" \
 			"CDEF:tx_b=tx1,tx2,ADDNAN")
 	fi
-	$pre
 	rrdtool graph \
 		"$1.tmp" \
 		--end "$END_TIME" \
@@ -483,6 +566,7 @@ network_graph() {
 		--lower-limit -10 \
 		--left-axis-format "%.0lf" \
 		--right-axis-format "%.0lf" \
+		--units-exponent 0 \
 		-A \
 		"TEXTALIGN:center" \
 		"${interfaces[@]}" \
@@ -519,10 +603,10 @@ temp_graph_imperial() {
 		"DEF:traw_max=$(check $2/gauge-cpu_temp.rrd):value:MAX" \
 		"DEF:traw_avg=$(check $2/gauge-cpu_temp.rrd):value:AVERAGE" \
 		"DEF:traw_min=$(check $2/gauge-cpu_temp.rrd):value:MIN" \
-		"CDEF:tfin_max=traw_max,1000,/,1.8,*,32,+" \
-		"CDEF:tfin_avg=traw_avg,1000,/,1.8,*,32,+" \
-		"CDEF:tfin_min=traw_min,1000,/,1.8,*,32,+" \
-		"AREA:tfin_max#ffcc00:Temperature\:" \
+		"CDEF:tfin_max=traw_max,${TEMP_MULTIPLIER},/,1.8,*,32,+" \
+		"CDEF:tfin_avg=traw_avg,${TEMP_MULTIPLIER},/,1.8,*,32,+" \
+		"CDEF:tfin_min=traw_min,${TEMP_MULTIPLIER},/,1.8,*,32,+" \
+		"AREA:tfin_max#$AYELLOW:Temperature\:" \
 		"GPRINT:tfin_max:LAST:%4.1lf F\c" \
 		"GPRINT:tfin_min:MIN:Min\: %4.1lf F" \
 		"GPRINT:tfin_avg:AVERAGE:Avg\: %4.1lf F" \
@@ -539,7 +623,7 @@ temp_graph_metric() {
 		--start end-$4 \
 		$small \
 		--title "Maximum Core Temperature" \
-		--vertical-label "Degrees Celcius" \
+		--vertical-label "Degrees Celsius" \
 		--right-axis 1:0 \
 		--lower-limit 24 \
 		--upper-limit 66 \
@@ -547,10 +631,10 @@ temp_graph_metric() {
 		"DEF:traw_max=$(check $2/gauge-cpu_temp.rrd):value:MAX" \
 		"DEF:traw_avg=$(check $2/gauge-cpu_temp.rrd):value:AVERAGE" \
 		"DEF:traw_min=$(check $2/gauge-cpu_temp.rrd):value:MIN" \
-		"CDEF:tfin_max=traw_max,1000,/" \
-		"CDEF:tfin_min=traw_min,1000,/" \
-		"CDEF:tfin_avg=traw_avg,1000,/" \
-		"AREA:tfin_max#ffcc00:Temperature\:" \
+		"CDEF:tfin_max=traw_max,${TEMP_MULTIPLIER},/" \
+		"CDEF:tfin_min=traw_min,${TEMP_MULTIPLIER},/" \
+		"CDEF:tfin_avg=traw_avg,${TEMP_MULTIPLIER},/" \
+		"AREA:tfin_max#$AYELLOW:Temperature\:" \
 		"GPRINT:tfin_max:LAST:%4.1lf C\c" \
 		"GPRINT:tfin_min:MIN:Min\: %4.1lf C" \
 		"GPRINT:tfin_avg:AVERAGE:Avg\: %4.1lf C" \
@@ -590,8 +674,8 @@ wlan0_graph() {
 ## RECEIVER GRAPHS
 
 local_rate_graph() {
-	if [ $ul_maxima ]; then upper="--rigid --upper-limit $ul_maxima"; else upper=""; fi
 	$pre
+	if [ $ul_maxima ]; then upper="--rigid --upper-limit $ul_maxima"; else upper=""; fi
 	rrdtool graph \
 		"$1.tmp" \
 		--end "$END_TIME" \
@@ -632,6 +716,7 @@ local_rate_graph() {
 	}
 
 local_trailing_rate_graph() {
+	$pre
 	if ! [[ -f $2/dump1090_cpu-airspy.rrd ]] && [[ -f $2/dump1090_messages-strong_signals.rrd ]]; then
 		strong1="AREA:strong#$RED:Messages > -3dBFS\g"
 		strong2="GPRINT:strong_percent_vdef: (%1.1lf<span font='2'> </span>%% of messages)"
@@ -643,31 +728,16 @@ local_trailing_rate_graph() {
 	if [ $ul_message_rate ]; then upper="--rigid --upper-limit $ul_message_rate"; else upper=""; fi
 	if [[ $max_messages_line == 1 ]]
 	then
-		maxline1="VDEF:peakmessages=messages,MAXIMUM"
-		maxline2="LINE1:peakmessages#$BLUE:dashes=2,8"
+        maxline=("VDEF:peakmessages=messages,MAXIMUM" "LINE1:peakmessages#$BLUE:dashes=2,8")
 	fi
-	if [ -f $2/dump1090_messages-remote_accepted.rrd ]
-	then messages="CDEF:messages=messages1,messages2,ADDNAN"
-	else messages="CDEF:messages=messages1"
+	if [ -f $2/dump1090_messages-remote_accepted.rrd ]; then
+        messages="CDEF:messages=messages1,messages2,ADDNAN"
+	else
+        messages="CDEF:messages=messages1"
 	fi
 	r_window=$((86400))
-	$pre
-	rrdtool graph \
-		"$1.tmp" \
-		--end "$END_TIME" \
-		--start end-$4 \
-		$big \
-		--slope-mode \
-		--title "$3 Message Rate" \
-		--vertical-label "Messages/Second" \
-		--lower-limit 0  \
-		$upper \
-		--right-axis $position_scaling:0 \
-		--units-exponent 0 \
-		--pango-markup \
-		"TEXTALIGN:center" \
-		"DEF:messages1=$(check $2/dump1090_messages-local_accepted.rrd):value:AVERAGE" \
-		"DEF:a1=$(check $2/dump1090_messages-local_accepted.rrd):value:AVERAGE:end=now-86400:start=end-$r_window" \
+    WEEK=( \
+        "DEF:a1=$(check $2/dump1090_messages-local_accepted.rrd):value:AVERAGE:end=now-86400:start=end-$r_window" \
 		"DEF:b1=$(check $2/dump1090_messages-local_accepted.rrd):value:AVERAGE:end=now-172800:start=end-$r_window" \
 		"DEF:c1=$(check $2/dump1090_messages-local_accepted.rrd):value:AVERAGE:end=now-259200:start=end-$r_window" \
 		"DEF:d1=$(check $2/dump1090_messages-local_accepted.rrd):value:AVERAGE:end=now-345600:start=end-$r_window" \
@@ -688,7 +758,6 @@ local_trailing_rate_graph() {
 		"DEF:emax1=$(check $2/dump1090_messages-local_accepted.rrd):value:MAX:end=now-432000:start=end-$r_window" \
 		"DEF:fmax1=$(check $2/dump1090_messages-local_accepted.rrd):value:MAX:end=now-518400:start=end-$r_window" \
 		"DEF:gmax1=$(check $2/dump1090_messages-local_accepted.rrd):value:MAX:end=now-604800:start=end-$r_window" \
-		"DEF:messages2=$(check $2/dump1090_messages-remote_accepted.rrd):value:AVERAGE" \
 		"DEF:a2=$(check $2/dump1090_messages-remote_accepted.rrd):value:AVERAGE:end=now-86400:start=end-$r_window" \
 		"DEF:b2=$(check $2/dump1090_messages-remote_accepted.rrd):value:AVERAGE:end=now-172800:start=end-$r_window" \
 		"DEF:c2=$(check $2/dump1090_messages-remote_accepted.rrd):value:AVERAGE:end=now-259200:start=end-$r_window" \
@@ -710,7 +779,6 @@ local_trailing_rate_graph() {
 		"DEF:emax2=$(check $2/dump1090_messages-remote_accepted.rrd):value:MAX:end=now-432000:start=end-$r_window" \
 		"DEF:fmax2=$(check $2/dump1090_messages-remote_accepted.rrd):value:MAX:end=now-518400:start=end-$r_window" \
 		"DEF:gmax2=$(check $2/dump1090_messages-remote_accepted.rrd):value:MAX:end=now-604800:start=end-$r_window" \
-		$messages \
 		"CDEF:a=a1,a2,ADDNAN" \
 		"CDEF:b=b1,b2,ADDNAN" \
 		"CDEF:c=c1,c2,ADDNAN" \
@@ -739,14 +807,6 @@ local_trailing_rate_graph() {
 		"CDEF:e3=e,UN,0,e,IF" \
 		"CDEF:f3=f,UN,0,f,IF" \
 		"CDEF:g3=g,UN,0,g,IF" \
-		"DEF:strong=$(check $2/dump1090_messages-strong_signals.rrd):value:AVERAGE" \
-		"DEF:positions=$(check $2/dump1090_messages-positions.rrd):value:AVERAGE" \
-		"CDEF:y2positions=positions,$position_scaling,/" \
-		"VDEF:strong_total=strong,TOTAL" \
-		"VDEF:messages_total=messages,TOTAL" \
-		"CDEF:hundred=messages,UN,100,100,IF" \
-		"CDEF:strong_percent=strong_total,hundred,*,messages_total,/" \
-		"VDEF:strong_percent_vdef=strong_percent,LAST" \
 		"SHIFT:a3:86400" \
 		"SHIFT:b3:172800" \
 		"SHIFT:c3:259200" \
@@ -782,12 +842,42 @@ local_trailing_rate_graph() {
 		"CDEF:max5=max3,gmax,MAXNAN" \
 		"CDEF:max=max4,max5,MAXNAN" \
 		"CDEF:maxarea=max,min,-" \
+		"LINE1:min#$LIGHTYELLOW" \
+		"AREA:maxarea#$LIGHTYELLOW:Min/Max:STACK" \
+		"LINE1:7dayaverage#$DGREEN:7 Day Average" \
+    )
+    if [[ ${4: -1} != "h" ]]; then
+        WEEK=()
+    fi
+	rrdtool graph \
+		"$1.tmp" \
+		--end "$END_TIME" \
+		--start end-$4 \
+		$big \
+		--slope-mode \
+		--title "$3 Message Rate" \
+		--vertical-label "Messages/Second" \
+		--lower-limit 0  \
+		$upper \
+		--right-axis $position_scaling:0 \
+		--units-exponent 0 \
+		--pango-markup \
+		"TEXTALIGN:center" \
+		"DEF:messages1=$(check $2/dump1090_messages-local_accepted.rrd):value:AVERAGE" \
+		"DEF:messages2=$(check $2/dump1090_messages-remote_accepted.rrd):value:AVERAGE" \
+		$messages \
+		"DEF:strong=$(check $2/dump1090_messages-strong_signals.rrd):value:AVERAGE" \
+		"DEF:positions=$(check $2/dump1090_messages-positions.rrd):value:AVERAGE" \
+		"CDEF:y2positions=positions,$position_scaling,/" \
+		"VDEF:strong_total=strong,TOTAL" \
+		"VDEF:messages_total=messages,TOTAL" \
+		"CDEF:hundred=messages,UN,100,100,IF" \
+		"CDEF:strong_percent=strong_total,hundred,*,messages_total,/" \
+		"VDEF:strong_percent_vdef=strong_percent,LAST" \
 		"LINE0.01:messages#$BLUE:Messages Received" \
-		"LINE1:min#FFFF99" \
-		"AREA:maxarea#FFFF99:Min/Max:STACK" \
-		"LINE1:7dayaverage#$GREEN:7 Day Average" \
+        "${WEEK[@]}" \
 		"LINE1:messages#$BLUE" \
-		$maxline1 $maxline2 \
+		"${maxline[@]}" \
         "$strong1" "$strong2" \
 		"LINE1:y2positions#$CYAN:Positions/s (RHS)\c" \
 		--watermark "Drawn: $nowlit";
@@ -795,6 +885,7 @@ local_trailing_rate_graph() {
 	}
 
 range_graph(){
+	$pre
 	label="Nautical Miles"
 	unitconv=0.000539956803
 	if [[ $range == "statute" ]]; then
@@ -839,7 +930,6 @@ range_graph(){
 			)
 	fi
 
-	$pre
 	rrdtool graph \
 		"$1.tmp" \
 		--end "$END_TIME" \
@@ -860,7 +950,7 @@ range_graph(){
 		"CDEF:quart3=dquart3,$unitconv,*" \
 		"CDEF:median=dmedian,$unitconv,*" \
 		"AREA:quart3#$GREEN:1st to 3rd Quartile" \
-		"AREA:quart1#FFFFFF" \
+		"AREA:quart1#$CANVAS" \
 		"LINE1:range#$BLUE:Max Range" \
 		"VDEF:avgrange=range_a,AVERAGE" \
 		"LINE1:avgrange#666666:Avg Max Range\\::dashes" \
@@ -879,6 +969,7 @@ range_graph(){
 
 
 signal_graph() {
+	$pre
     #rrdtool graph can't handle empty arguments, give it bogus stuff to do
     noise1="CDEF:fake1=signal"
 	if [[ $3 == "UAT" ]]; then
@@ -903,7 +994,7 @@ signal_graph() {
             noise1="LINE1:noise#$DGREEN:Noise"
         fi
 	fi
-	$pre
+    if [ $ll_signal ]; then lower="$ll_signal"; else lower="-45"; fi
 	rrdtool graph \
 		"$1.tmp" \
 		--end "$END_TIME" \
@@ -915,16 +1006,16 @@ signal_graph() {
 		-y 6:1 \
 		--left-axis-format "%.0lf" \
 		--right-axis-format "%.0lf" \
-		--upper-limit 1    \
-		--lower-limit -45 \
-		--rigid \
 		--units-exponent 0 \
+		--upper-limit 1    \
+		--lower-limit "$lower" \
+		--rigid \
 		${defines[*]} \
 		"DEF:noise=$(check $2/dump1090_dbfs-noise.rrd):value:AVERAGE" \
 		"TEXTALIGN:center" \
 		"CDEF:mes=median,UN,signal,median,IF" \
 		"AREA:quart1#$GREEN:1st to 3rd Quartile" \
-		"AREA:quart3#FFFFFF" \
+		"AREA:quart3#$CANVAS" \
 		"LINE1:mes#444444:Mean Median Level\:" \
 		"GPRINT:mes:AVERAGE:%4.1lf\c" \
 		"LINE1:min#$CYAN:Weakest\:" \
@@ -932,6 +1023,168 @@ signal_graph() {
         "$noise1" \
 		"LINE1:peak#$BLUE:Peak Level\:" \
 		"GPRINT:peak:MAX:%4.1lf\c" \
+		--watermark "Drawn: $nowlit";
+	mv "$1.tmp" "$1"
+	}
+
+dump1090_misc() {
+	$pre
+    defines=( \
+        "DEF:gain=$(check $2/dump1090_misc-gain_db.rrd):value:AVERAGE" \
+    )
+	if [[ -n "$ul_dump1090_misc" ]]; then upper="--rigid --upper-limit $ul_dump1090_misc"; else upper=""; fi
+    TITLE="Misc"
+	rrdtool graph \
+		"$1.tmp" \
+		--end "$END_TIME" \
+		--start end-$4 \
+		$small \
+		--title "$TITLE" \
+		--right-axis 1:0 \
+		--vertical-label "misc" \
+		--left-axis-format "%.0lf" \
+		--right-axis-format "%.0lf" \
+		--units-exponent 0 \
+		-y 3:1 \
+        $upper \
+		--lower-limit 4  \
+		${defines[*]} \
+		"TEXTALIGN:center" \
+		"LINE2:gain#$DRED:Gain\:" \
+		"GPRINT:gain:LAST:%2.1lf" \
+		--watermark "Drawn: $nowlit";
+	mv "$1.tmp" "$1"
+	}
+df_counts() {
+	$pre
+	DF=(0 4 5 11 16 17 18 19 21)
+	colors=($GREEN $BLUE $DBLUE $ABLUE $RED $DRED $DGREEN $CYAN $LRED)
+	defines=()
+	graphs=()
+	for i in $(seq 0 8); do
+		df="${DF[i]}"
+		defines+=("DEF:df_min${df}=$(check $2/df_count_minute-$df.rrd):value:AVERAGE")
+		if [[ $df == 11 ]]; then
+			defines+=("CDEF:df${df}=df_min${df},120,/")
+			graphs+=("LINE1.5:df${df}#${colors[$i]}:DF${df} halfed")
+			graphs+=("GPRINT:df${df}:LAST:%4.1lf")
+		else
+			defines+=("CDEF:df${df}=df_min${df},60,/")
+			graphs+=("LINE1.5:df${df}#${colors[$i]}:DF${df}")
+			graphs+=("GPRINT:df${df}:LAST:%4.1lf")
+		fi
+		#echo "${defines[$i]}"
+		#echo "${graphs[$i]}"
+	done
+	rrdtool graph \
+		"$1.tmp" \
+		--end "$END_TIME" \
+		--start end-$4 \
+		$small \
+		--title "DF counts" \
+		--vertical-label "per second" \
+		--right-axis 1:0 \
+		--left-axis-format "%.0lf" \
+		--right-axis-format "%.0lf" \
+		--units-exponent 0 \
+		"${defines[@]}" \
+		"TEXTALIGN:center" \
+		"${graphs[@]}" \
+		--watermark "Drawn: $nowlit";
+	mv "$1.tmp" "$1"
+	}
+signal_airspy() {
+	$pre
+    defines=( \
+        "DEF:min=$(check $2/airspy_$3-min.rrd):value:MIN" \
+        "DEF:p5=$(check $2/airspy_$3-p5.rrd):value:AVERAGE" \
+        "DEF:quart1=$(check $2/airspy_$3-q1.rrd):value:AVERAGE" \
+        "DEF:median=$(check $2/airspy_$3-median.rrd):value:AVERAGE" \
+        "DEF:quart3=$(check $2/airspy_$3-q3.rrd):value:AVERAGE" \
+        "DEF:p95=$(check $2/airspy_$3-p95.rrd):value:AVERAGE" \
+        "DEF:peak=$(check $2/airspy_$3-max.rrd):value:MAX" \
+    )
+    if [[ $3 == snr ]]; then
+        UL="--upper-limit 45"
+        LL="--lower-limit 0"
+    else
+        UL="--upper-limit 75"
+        LL="--lower-limit 0"
+    fi
+    TITLE="Airspy ${3^^}"
+    if [[ $3 == "noise" ]]; then TITLE="Airspy Noise"; fi
+	rrdtool graph \
+		"$1.tmp" \
+		--end "$END_TIME" \
+		--start end-$4 \
+		$small \
+		--title "$TITLE" \
+		--vertical-label "dB" \
+		--right-axis 1:0 \
+		-y 6:1 \
+		--left-axis-format "%.0lf" \
+		--right-axis-format "%.0lf" \
+		--units-exponent 0 \
+        --rigid \
+		$UL \
+		$LL \
+		${defines[*]} \
+		"TEXTALIGN:center" \
+		"AREA:peak#$LCYAN:Peak Level\:" \
+		"GPRINT:peak:MAX:%4.1lf" \
+		"AREA:p95#$LBLUE:5th to 95th Percentile\c" \
+		"AREA:quart3#$LGREEN:1st to 3rd Quartile" \
+		"AREA:quart1#$LBLUE" \
+		"AREA:p5#$LCYAN" \
+		"AREA:min#$CANVAS" \
+		"LINE1:median#444444:Mean Median Level\:" \
+		"GPRINT:median:AVERAGE:%4.1lf" \
+		"LINE1:min#$LCYAN:Weakest\:" \
+		"GPRINT:min:MIN:%4.1lf" \
+		--watermark "Drawn: $nowlit";
+	mv "$1.tmp" "$1"
+	}
+misc_airspy() {
+	$pre
+    defines=( \
+        "DEF:lost_buffers=$(check $2/airspy_lost-lost_buffers.rrd):value:AVERAGE" \
+        "DEF:aircraft_count=$(check $2/airspy_aircraft-max_aircraft_count.rrd):value:AVERAGE" \
+        "DEF:gain=$(check $2/airspy_misc-gain.rrd):value:AVERAGE" \
+        "DEF:preamble_filter=$(check $2/airspy_misc-preamble_filter.rrd):value:AVERAGE" \
+        "DEF:samplerate=$(check $2/airspy_misc-samplerate.rrd):value:AVERAGE" \
+    )
+	if [[ -n "$ul_airspy_misc" ]]; then upper="--rigid --upper-limit $ul_airspy_misc"; else upper=""; fi
+    TITLE="Airspy Misc"
+	rrdtool graph \
+		"$1.tmp" \
+		--end "$END_TIME" \
+		--start end-$4 \
+		$small \
+		--title "$TITLE" \
+		--right-axis 1:0 \
+		--vertical-label "misc" \
+		--left-axis-format "%.0lf" \
+		--right-axis-format "%.0lf" \
+		--units-exponent 0 \
+		-y 3:1 \
+        $upper \
+		--lower-limit 0  \
+		${defines[*]} \
+		"TEXTALIGN:center" \
+		"LINE2:gain#$DRED:Gain\:" \
+		"GPRINT:gain:LAST:%0.0lf" \
+		"LINE2:samplerate#$DBLUE:Samplerate\:" \
+		"GPRINT:samplerate:LAST:%0.0lf" \
+		"LINE2:preamble_filter#$DGREEN:Preamble Filter\:" \
+		"GPRINT:preamble_filter:LAST:%0.1lf\c" \
+		"CDEF:lost_buffers_min=lost_buffers,60,*" \
+		"LINE2:lost_buffers_min#$RED:Lost Buffers per minute" \
+		"VDEF:total_lost=lost_buffers,TOTAL" \
+		"GPRINT:total_lost:Total Lost Buffers\: %0.0lf%s\c" \
+		"VDEF:avgac=aircraft_count,AVERAGE" \
+		"GPRINT:avgac:Average Aircraft Count\: %3.0lf" \
+		"VDEF:maxac=aircraft_count,MAXIMUM" \
+		"GPRINT:maxac:Highest Aircraft Count\: %3.0lf" \
 		--watermark "Drawn: $nowlit";
 	mv "$1.tmp" "$1"
 	}
@@ -950,6 +1203,7 @@ signal_graph() {
 		--lower-limit 0 \
 		--right-axis-format "%.1lf" \
 		--left-axis-format "%.1lf" \
+        --units-exponent 0 \
 		"TEXTALIGN:center" \
 		"DEF:all=$2/dump1090_aircraft-recent_978.rrd:total:AVERAGE" \
 		"DEF:pos=$2/dump1090_aircraft-recent_978.rrd:positions:AVERAGE" \
@@ -986,6 +1240,7 @@ signal_graph() {
 		--lower-limit 0  \
 		--right-axis-format "%.1lf" \
 		--left-axis-format "%.1lf" \
+        --units-exponent 0 \
 		"DEF:messages=$2/dump1090_messages-messages_978.rrd:value:AVERAGE" \
 		"LINE1:messages#$BLUE:Messages\c" \
 		"COMMENT: \n" \
@@ -1007,12 +1262,29 @@ dump1090_graphs() {
 	signal_graph ${DOCUMENTROOT}/dump1090-$2-signal-$4.png ${DB}/$1/dump1090-$2 "$3" "$4" "$5"
 	if [ -f ${DB}/$1/dump1090-$2/dump1090_messages-messages_978.rrd ]
 	then
-		sed -i -e 's/ style="display:none"> <!-- dump978 -->/> <!-- dump978 -->/' /usr/share/graphs1090/html/index.html
+        if grep -qs -e 'style="display:none"> <!-- dump978 -->' /usr/share/graphs1090/html/index.html; then
+            sed -i -e 's/ style="display:none"> <!-- dump978 -->/> <!-- dump978 -->/' /usr/share/graphs1090/html/index.html
+        fi
 		range_graph ${DOCUMENTROOT}/dump1090-$2-range_978-$4.png ${DB}/$1/dump1090-$2 "UAT" "$4" "$5"
 		978_aircraft ${DOCUMENTROOT}/dump1090-$2-aircraft_978-$4.png ${DB}/$1/dump1090-$2 "UAT" "$4" "$5"
 		978_messages ${DOCUMENTROOT}/dump1090-$2-messages_978-$4.png ${DB}/$1/dump1090-$2 "UAT" "$4" "$5"
 		signal_graph ${DOCUMENTROOT}/dump1090-$2-signal_978-$4.png ${DB}/$1/dump1090-$2 "UAT" "$4" "$5"
 	fi
+	if [[ -f ${DB}/$1/dump1090-$2/df_count_minute-17.rrd ]]; then
+		df_counts ${DOCUMENTROOT}/df_counts-$2-$4.png ${DB}/$1/dump1090-$2 "df_counts" "$4" "$5"
+	fi
+    if [[ -f /run/airspy_adsb/stats.json ]]; then
+        if grep -qs -e 'style="display:none"> <!-- airspy -->' /usr/share/graphs1090/html/index.html; then
+            sed -i -e 's/ style="display:none"> <!-- airspy -->/> <!-- airspy -->/' /usr/share/graphs1090/html/index.html
+        fi
+        signal_airspy ${DOCUMENTROOT}/airspy-$2-rssi-$4.png ${DB}/$1/dump1090-$2 "rssi" "$4" "$5"
+        signal_airspy ${DOCUMENTROOT}/airspy-$2-snr-$4.png ${DB}/$1/dump1090-$2 "snr" "$4" "$5"
+        signal_airspy ${DOCUMENTROOT}/airspy-$2-noise-$4.png ${DB}/$1/dump1090-$2 "noise" "$4" "$5"
+        misc_airspy ${DOCUMENTROOT}/airspy-$2-misc-$4.png ${DB}/$1/dump1090-$2 "misc" "$4" "$5"
+    fi
+    if [[ -f ${DB}/$1/dump1090-$2/dump1090_misc-gain_db.rrd ]]; then
+        dump1090_misc ${DOCUMENTROOT}/dump1090-$2-misc-$4.png ${DB}/$1/dump1090-$2 "misc" "$4" "$5"
+    fi
 }
 
 system_graphs() {

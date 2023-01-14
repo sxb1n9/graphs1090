@@ -22,6 +22,9 @@ sudo nano /etc/default/graphs1090
 ```
 Ctrl-x to exit, y (yes) and enter to save.
 
+Checkout available options: <https://raw.githubusercontent.com/wiedehopf/graphs1090/master/default>
+Recently added: colorscheme=dark
+
 Reset configuration to defaults:
 ```
 sudo cp /usr/share/graphs1090/default-config /etc/default/graphs1090
@@ -37,6 +40,10 @@ http://192.168.x.yy/graphs1090
 or
 
 http://192.168.x.yy/perf
+
+or
+
+http://192.168.x.yy:8542
 
 ### Adjusting gain
 
@@ -150,8 +157,12 @@ sudo systemctl restart collectd
 
 ### Resetting the database format
 
+Caution: while this process retains data, it can cause some data anomalies / issues, a backup is recommended before proceding. (an automatic backup is created by the script but ... better you know where your backup is)
+
 This might be a good idea if you changed from the adsb receiver project graphs and kept the data.
 Also if you upgraded at a somewhen July 15th to July 16th 2019. Had a bad setting removing maximum data keeping for some part of the data.
+
+This can be necessary to change the database to save more than 3 years of data. (if the database was created before 2022-03-20)
 
 ```
 sudo bash -c "$(curl -L -o - https://github.com/wiedehopf/graphs1090/raw/master/install.sh)"
@@ -207,10 +218,11 @@ in the server { } section of either `/etc/nginx/sites-enabled/default` or `/etc/
 
 Don't forget to restart the nginx service.
 
-### Removing 978 graphs + data
+### Removing UAT / 978 graphs + data
 
 ```
 sudo systemctl stop collectd
+sudo /usr/share/graphs1090/gunzip.sh /var/lib/collectd/rrd/localhost
 sudo rm /var/lib/collectd/rrd/localhost/dump1090-localhost/*978*
 sudo systemctl restart collectd graphs1090
 ```
@@ -244,13 +256,15 @@ sudo ln -s /run/dump1090-fa /usr/local/share/dump1090-data/data
 
 ```
 cd /var/lib/collectd/rrd
+sudo systemctl stop collectd
 sudo /usr/share/graphs1090/gunzip.sh /var/lib/collectd/rrd/localhost
-sudo tar cf rrd.tar localhost
-cp rrd.tar /tmp
+sudo tar -cz -f rrd.tar.gz localhost
+cp rrd.tar.gz /tmp
+sudo systemctl restart collectd
 ```
 Backup this file:
 ```
-/tmp/rrd.tar
+/tmp/rrd.tar.gz
 ```
 
 I'm not exactly sure how you would do that on Windows.
@@ -264,10 +278,10 @@ Then copy it back to its place like this:
 ```
 sudo mkdir -p /var/lib/collectd/rrd/
 cd /var/lib/collectd/rrd
-sudo cp /tmp/rrd.tar /var/lib/collectd/rrd/
+sudo cp /tmp/rrd.tar.gz /var/lib/collectd/rrd/
 sudo systemctl stop collectd
 sudo /usr/share/graphs1090/gunzip.sh /var/lib/collectd/rrd/localhost
-sudo tar xf rrd.tar
+sudo tar -x -f rrd.tar.gz
 sudo systemctl restart collectd graphs1090
 ```
 
@@ -275,40 +289,88 @@ This should be all that is required, no guarantees though!
 
 ### Backup and Restore (different architecture, for example moving from RPi to x86 or the other way around)
 
-Basically the same procedure as above, but with this difference:
-
-Before doing the backup, run this command:
+Before proceeding, run the install / update script for graphs1090 on BOTH machines to get latest script versions.
 
 ```
-sudo /usr/share/graphs1090/rrd-dump.sh /var/lib/collectd/rrd/localhost/
+sudo /usr/share/graphs1090/rrd-dump.sh /var/lib/collectd/rrd/localhost /tmp/xml.tar.gz
 ```
 
-This creates XML files from the database files in the same directory which can be later restored to database files on the target system.
+This creates XML files from the database files and places them in a designated tar.gz file which can be later restored to database files on the target system.
 
-Complete the process described above (backup the folder, then copy it back to its place on the new card).
-Now run this command:
+Copy the file xml.tar.gz to the new computer, place it in /tmp and run:
 
 ```
-sudo /usr/share/graphs1090/rrd-restore.sh /var/lib/collectd/rrd/localhost/
+sudo /usr/share/graphs1090/rrd-restore.sh /tmp/xml.tar.gz /var/lib/collectd/rrd/localhost
 ```
 
 Again no guarantees, but this should work.
 
-### Issues with some collectd versions
+### Automatic backups
 
-Symptom: collectd doesn't work, error looks something like this in the syslog:
+If you have the write saving measures enabled (the default), there will be automatic backups for the last 8 weeks.
+This feature was introduced around 2021-08-07, if you installed before that date you won't have those files.
+
+These commands should list them:
 ```
-collectd[16507]: Traceback (most recent call last):
-collectd[16507]: File "/usr/lib/python2.7/site.py", line 554, in <module>
+cd /var/lib/collectd/rrd
+ls
 ```
 
-Possible solution:
+Restoring one of the backups will mean you lose all data collected after that backup.
+(alternatively use the data integration method explained in the next paragraph)
 
+If you want to restore one of them for whatever reason, do the following:
+```
+cd /var/lib/collectd/rrd
+sudo systemctl stop collectd
+sudo tar --overwrite -x -f auto-backup-2021-week_42.tar.gz
+sudo systemctl restart collectd graphs1090
+```
+
+You'll have to choose the week you want to restore, in the above example it's 42 (file auto-backup-2021-week_42.tar.gz).
+
+### Integrate data from two data sets (experimental, results not guaranteed and often a bit different than restoring a backup)
+
+It's best to do a manual backup of the dataset currently being used, instructions from backup and restore apply.
+Often it's just better to use the old data, there are some particular changes that can occur in the data.
+
+You'll need old data, it's best to put them in /tmp/localhost.
+For the automatic backups you can do that like this:
+```
+cp /var/lib/collectd/rrd/auto-backup-2021-week_42.tar.gz /tmp
+cd /tmp
+sudo tar --overwrite -x -f auto-backup-2021-week_42.tar.gz
+```
+Once you have the data in /tmp/localhost, proceed as follows:
+
+```
+sudo systemctl stop collectd
+sudo /usr/share/graphs1090/gunzip.sh /var/lib/collectd/rrd/localhost
+sudo /usr/share/graphs1090/rrd-integrate-old.sh /tmp/localhost
+sudo systemctl restart collectd graphs1090
+```
+
+If it all worked, the two datasets should be integrated now.
+
+
+### Ubuntu 20 fixes (symptom: collectd errors out on startup)
+
+- also applies to: Linux Mint 20.1
+
+Before trying this, `sudo apt update` and `sudo apt dist-upgrade` your system.
+If that fixes it, no need for this fix.
+
+- arm64 / aarch64:
+```
+echo "LD_PRELOAD=/usr/lib/python3.8/config-3.8-aarch64-linux-gnu/libpython3.8.so" | sudo tee -a /etc/default/collectd
+sudo systemctl restart collectd
+```
+- x86_64
 ```
 echo "LD_PRELOAD=/usr/lib/python3.8/config-3.8-x86_64-linux-gnu/libpython3.8.so" | sudo tee -a /etc/default/collectd
 sudo systemctl restart collectd
 ```
-
+- removing this workaround (any architecture)
 Undoing the solution if the logs still show failure or when the issue has been fixed in the package provided by your distribution.
 ```
 sudo sed -i -e 's#LD_PRELOAD=/usr/lib/python3.8.*##' /etc/default/collectd
@@ -320,6 +382,19 @@ sudo systemctl restart collectd
 
 ```
 sudo systemctl stop collectd
-sudo rm /var/lib/collectd/rrd/localhost -rf
+sudo rm /var/lib/collectd/rrd/localhost* -rf
+sudo rm -f /var/lib/collectd/rrd/auto-backup-$(date +%Y-week_%V).tar.gz
 sudo systemctl restart collectd graphs1090
+```
+
+### Change the timezone used in the graphs
+
+Either change the global system timezone or add this to /etc/default/grahps1090 using the correct timezone:
+```
+export TZ=Europe/Berlin
+```
+
+List the timezone name using this command:
+```
+timedatectl list-timezones
 ```

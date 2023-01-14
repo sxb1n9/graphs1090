@@ -51,6 +51,125 @@ def handle_config(root):
 
 V=collectd.Values(host='', plugin='dump1090', time=0)
 
+def dispatch_df(data, stats, name):
+    if not has_key(stats, name):
+        return
+    if not has_key(stats, 'now'):
+        return
+    instance_name,host,url = data
+
+    now = stats['now']
+    df_counts = stats[name]
+
+    for df in [0, 4, 5, 11, 16, 17, 18, 19, 20, 21]:
+        V.dispatch(plugin_instance = instance_name,
+                host = host,
+                type = 'df_count_minute',
+                type_instance = str(df),
+                time = now,
+                values = [df_counts[df]],
+                interval = 60)
+
+def dispatch_misc(now, data, stats, name, dispatch_type):
+    if not has_key(stats, name):
+        return
+    instance_name,host,url = data
+
+    subject = stats[name]
+
+    V.dispatch(plugin_instance = instance_name,
+            host = host,
+            type = dispatch_type ,
+            type_instance = name,
+            time = now,
+            values = [subject],
+            interval = 60)
+
+def dispatch_quartiles(data, stats, name):
+    if not has_key(stats, name):
+        return
+    if not has_key(stats, 'now'):
+        return
+
+    now = stats['now']
+    quart = stats[name]
+
+    instance_name,host,url = data
+    for index in ['min', 'p5', 'q1', 'median', 'q3', 'p95', 'max']:
+        if has_key(quart, index):
+            #collectd.warning(index + str(quart[index]))
+            V.dispatch(plugin_instance = instance_name,
+                    host = host,
+                    type = 'airspy_' + name,
+                    type_instance = index,
+                    time = now,
+                    values = [quart[index]],
+                    interval = 60)
+
+def read_airspy(data):
+    instance_name,host,url = data
+
+    try:
+        #airspy cpu usage
+        cmdString = "PID=$(systemctl show -p MainPID airspy_adsb | cut -f 2 -d=); cat /proc/$PID/task/*/stat | cut -d ' ' -f 14,15 && getconf CLK_TCK"
+        if (sys.version_info > (3, 0)):
+            p = subprocess.Popen(cmdString, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+        else:
+            p = subprocess.Popen(cmdString, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+        out, err = p.communicate()
+
+        ptime=0
+
+        if p.returncode == 0 :
+            out, clk_tck, _ = out.rsplit('\n', 2)
+            out = out.split('\n')
+            biggest = 0
+            cycles = []
+            firstLine = out[0]
+            otherLines = out[1:]
+            for i in firstLine.split(' '):
+                cycles.append(int(i))
+            for line in otherLines:
+                inc = 0
+                for i in line.split(' '):
+                    cycles[inc] += int(i)
+                    inc += 1
+
+            times = [int(i*1000/int(clk_tck)) for i in cycles]
+            ptime = sum(times)
+            utime = times[0]
+            stime = times[1]
+
+            V.dispatch(plugin_instance = instance_name,
+                       host=host,
+                       type='dump1090_cpu',
+                       type_instance='airspy',
+                       time=time.time(),
+                       values = [ptime])
+    except Exception as error:
+        #collectd.warning(str(error))
+        pass
+
+    try:
+        with closing(urlopen('file:///run/airspy_adsb/stats.json', None, 5.0)) as stats_file:
+            stats = json.load(stats_file)
+    except:
+        return
+
+    dispatch_quartiles(data, stats, 'rssi')
+    dispatch_quartiles(data, stats, 'snr')
+    dispatch_quartiles(data, stats, 'noise')
+
+    if has_key(stats,'now'):
+        now = stats['now']
+        dispatch_misc(now, data, stats, 'preamble_filter', 'airspy_misc')
+        dispatch_misc(now, data, stats, 'samplerate', 'airspy_misc')
+        dispatch_misc(now, data, stats, 'gain', 'airspy_misc')
+        dispatch_misc(now, data, stats, 'lost_buffers', 'airspy_lost')
+        dispatch_misc(now, data, stats, 'max_aircraft_count', 'airspy_aircraft')
+
+    dispatch_df(data, stats, 'df_counts')
 
 def read_1090(data):
     instance_name,host,url = data
@@ -62,6 +181,11 @@ def read_1090(data):
                type_instance='NaN',
                time=time.time(),
                values = [1])
+
+    try:
+        read_airspy(data)
+    except:
+        pass
 
     try:
         with closing(urlopen(url + '/data/stats.json', None, 5.0)) as stats_file:
@@ -82,6 +206,20 @@ def read_1090(data):
     except Exception as error:
         collectd.warning(str(error))
         return
+
+
+    try:
+        if has_key(stats['last1min'],'adaptive'):
+            stuff = stats['last1min']['adaptive']
+            dispatch_misc(stats['last1min']['end'], data, stuff, 'gain_db', 'dump1090_misc')
+        elif has_key(stats['last1min'],'gain_db'):
+            stuff = stats['last1min']
+            dispatch_misc(stats['last1min']['end'], data, stuff, 'gain_db', 'dump1090_misc')
+        elif has_key(stats, 'gain_db') and has_key(stats, 'now'):
+            dispatch_misc(stats['now'], data, stats, 'gain_db', 'dump1090_misc')
+    except:
+        collectd.warning(str(error))
+        pass
 
     # Signal measurements - from the 1 min bucket
     if has_key(stats['last1min'],'local'):
@@ -231,7 +369,7 @@ def read_1090(data):
 
     # Position counts
     posCount = stats['total']['cpr']['global_ok'] + stats['total']['cpr']['local_ok']
-    if has_key(stats['total'],'position_count_total'):
+    if posCount == 0 and has_key(stats['total'],'position_count_total'):
         posCount = stats['total']['position_count_total']
 
     V.dispatch(plugin_instance = instance_name,
@@ -264,35 +402,6 @@ def read_1090(data):
                    time=stats['total']['end'],
                    values = [stats['total']['cpu'][k]])
 
-    #airspy cpu usage
-    cmdString = "PID=$(systemctl show -p MainPID airspy_adsb | cut -f 2 -d=); cat /proc/$PID/task/$(ls /proc/$PID/task | awk NR==3)/stat | cut -d ' ' -f 14,15 && getconf CLK_TCK"
-    if (sys.version_info > (3, 0)):
-        p = subprocess.Popen(cmdString, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
-    else:
-        p = subprocess.Popen(cmdString, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-
-    out, err = p.communicate()
-
-    ptime=0
-
-    if p.returncode == 0 :
-        try:
-            out, clk_tck = out.split('\n', 1)
-            out = [(int(i)*1000)/int(clk_tck) for i in out.split(' ')]
-            ptime = sum(out)
-            utime = out[0]
-            stime = out[1]
-
-        except:
-            ptime=0
-
-    if ptime != 0 :
-        V.dispatch(plugin_instance = instance_name,
-                   host=host,
-                   type='dump1090_cpu',
-                   type_instance='airspy',
-                   time=time.time(),
-                   values = [ptime])
 
     total = 0
     with_pos = 0
@@ -358,6 +467,8 @@ def read_1090(data):
                    time=aircraft_data['now'],
                    values = [minimum])
 
+    if has_key(stats['last1min'],'max_distance'):
+        max_range = stats['last1min']['max_distance'];
     # max range is always dispatched, even if zero
     V.dispatch(plugin_instance = instance_name,
                host=host,
