@@ -6,9 +6,9 @@
 
 # INITIAL SETUP ===============================================================
 
-echo $1_LINE
+echo $LINE_1
 echo "Starting Install statsV2"
-echo $1_LINE
+echo $LINE_1
 
 # SET error logging
 set -e
@@ -59,7 +59,7 @@ COMMANDS="git rrdtool wget unzip collectd"
 PACKAGES="git rrdtool wget unzip bash-builtins collectd-core"
 PACKAGE_COLLECTD="http://mirrors.kernel.org/ubuntu/pool/universe/c/collectd/collectd-core_5.12.0-11_amd64.deb"
 
-1_LINE="--------------------------------------------------------------------------------"
+LINE_1="--------------------------------------------------------------------------------"
 
 # FUNCTIONS ==================================================================
 
@@ -110,7 +110,7 @@ function getGIT()
 
 if [[ "$1" == "uninstall" ]]; then
     echo "Uninstalling statsV2"
-    echo $1_LINE
+    echo $LINE_1
 
     systemctl stop collectd
     systemctl disable --now statsV2
@@ -129,14 +129,14 @@ if [[ "$1" == "uninstall" ]]; then
 
     echo "Uninstall finished"
     echo "Exiting ..."
-    echo $1_LINE
+    echo $LINE_1
     exit 1
 fi 
 
 # DEPENDANCIES ================================================================
 
 echo "Install dependancies"
-echo $1_LINE
+echo $LINE_1
 
 # MAKE directories
 mkdir -p $STATSV2_USR/installed
@@ -159,7 +159,7 @@ fi
 if [[ $NEED_INSTALL == "1" ]]
 then
 	echo "Installing required packages: $PACKAGES"
-	echo $1_LINE
+	echo $LINE_1
 
 	if ! apt-get install -y --no-install-suggests --no-install-recommends $PACKAGES; then
         aptUpdate
@@ -180,7 +180,7 @@ then
             if ! command -v collectd &>/dev/null; then
                 echo "ERROR: couldn't install collectd, it's probably a ubuntu issue ... try installing it manually then rerun this install script!"
                 echo "Exiting ..."
-                echo $1_LINE
+                echo $LINE_1
                 exit 1
             fi
         fi
@@ -198,12 +198,12 @@ then
 
     if [[ $NEED_INSTALL == 0 ]]; then
 		echo "Packages successfully installed!"
-		echo $1_LINE
+		echo $LINE_1
 	else
 		echo "Failed to install required packages: $packages"
         echo "try installing it manually then rerun this install script!"
 		echo "Exiting ..."
-        echo $1_LINE
+        echo $LINE_1
 		exit 1
 	fi
 fi
@@ -231,7 +231,7 @@ hash -r
 # GIT CLONE ===================================================================
 
 echo "Install git clone"
-echo $1_LINE
+echo $LINE_1
 
 if [[ "$1" == "test" ]]; then
 	true
@@ -242,14 +242,14 @@ elif wget --timeout=30 -q -O /tmp/$BRANCH.zip $repo/archive/$BRANCH.zip && unzip
 else
 	echo "Unable to download files, exiting! (Maybe try again?)"
     echo "Exiting ..."
-    echo $1_LINE
+    echo $LINE_1
 	exit 1
 fi
 
 # COLLECTD AIRSPY =============================================================
 
 echo "Install AIRSPY if available"
-echo $1_LINE
+echo $LINE_1
 
 if [[ -f "$CPU_AIR" ]]; then
     cp "$CPU_AIR" "$COLLECTD_RUN/dump1090_cpu-airspy.rrd"
@@ -266,7 +266,7 @@ fi
 # INSTALL STATSV2 GENERAL =====================================================
 
 echo "Install of statsV2 files"
-echo $1_LINE
+echo $LINE_1
 
 cp LICENSE $STATSV2_USR
 cp README.md $STATSV2_USR
@@ -289,16 +289,16 @@ cp statsV2-dump1090.py $STATSV2_USR
 cp statsV2-system.py $STATSV2_USR
 
 echo "exit this far nothing has happened"
-echo $1_LINE
+echo $LINE_1
 exit 1
 
 # SETUP COLLECTD ==============================================================
 
 echo "Setup collectd conf"
-echo $1_LINE
+echo $LINE_1
 
 echo "BACKUP /etc/collectd/collectd.conf to /etc/collectd/collectd.conf.statsV2"
-echo $1_LINE
+echo $LINE_1
 cp /etc/collectd/collectd.conf /etc/collectd/collectd.conf.statsV2 &>/dev/null || true
 
 # INSTALL collectd.conf
@@ -307,10 +307,10 @@ if grep -e 'system-stats' -qs /etc/collectd/collectd.conf &>/dev/null; then
 
     if grep -e 'statsV2-system' -qs /etc/collectd/collectd.conf &>/dev/null; then
         echo "statsV2 already installed - no update"
-        echo $1_LINE
+        echo $LINE_1
     else
         echo "statsV2 NOT installed - using collectd conf which includes graphs1090 so they can run in parrallel"
-        echo $1_LINE
+        echo $LINE_1
         cp statsV2-collectd-graphs1090.conf /etc/collectd/collectd.conf
     fi
 else
@@ -318,10 +318,10 @@ else
 
     if grep -e 'statsV2-system' -qs /etc/collectd/collectd.conf &>/dev/null; then
         echo "statsV2 already installed - no update"
-        echo $1_LINE
+        echo $LINE_1
     else
         echo "statsV2 NOT installed - using collectd conf for only statsV2"
-        echo $1_LINE
+        echo $LINE_1
         cp statsV2-collectd.conf /etc/collectd/collectd.conf
     fi
 fi
@@ -341,7 +341,7 @@ done
 # SETUP CONFIG ================================================================
 
 echo "Setup conf"
-echo $1_LINE
+echo $LINE_1
 
 # INSTALL html
 cp -r html $STATSV2_USR
@@ -359,7 +359,7 @@ cp statsV2.service $SERVICE_CONF/statsV2.service
 # SETUP LIGHTTPD ==============================================================
 
 echo "Setup lighttpd"
-echo $1_LINE
+echo $LINE_1
 
 # INSTALL lighttpd conf to conf-enabled make conf-available
 if [ -d /etc/lighttpd/conf.d/ ] && ! [ -d /etc/lighttpd/conf-enabled/ ] && ! [ -d /etc/lighttpd/conf-available ] && command -v lighttpd &>/dev/null; then
@@ -377,7 +377,7 @@ fi
 # SETUP SYMLINKS COLLECTD =====================================================
 
 echo "Setup SYMLINKS 1090"
-echo $1_LINE
+echo $LINE_1
 
 SYM=/usr/share/statsV2/data-symlink
 mkdir -p $SYM
@@ -401,11 +401,11 @@ elif [ -f /run/readsb/stats.json ]; then
     sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
 else
 	echo "Can't find any 1090 instances, please check you already have dump1090 installed"
-    echo $1_LINE
+    echo $LINE_1
 fi
 
 echo "Setup SYMLINKS 978"
-echo $1_LINE
+echo $LINE_1
 
 # INSTALL symlinks 978 to collectd.conf
 SYM=/usr/share/statsV2/978-symlink
@@ -418,25 +418,25 @@ elif [ -f /run/adsbexchange-978/aircraft.json ]; then
     sed -i -e 's?URL_DUMP978 .*?URL_DUMP978 "file:///usr/share/statsV2/978-symlink"?' /etc/collectd/collectd.conf
 else
 	echo "Can't find any 978 instances, please check you already have dump978 installed"
-    echo $1_LINE
+    echo $LINE_1
 fi
 
 # SETUP STATSV2 ===============================================================
 
 echo "Setup statsV2"
-echo $1_LINE
+echo $LINE_1
 
 # CHECK os release jessi
 if grep jessie /etc/os-release >/dev/null
 then
 	echo "Some features are not available on jessie! modifying statsV2-graphs.sh"
-	echo $1_LINE
+	echo $LINE_1
 	sed -i -e 's/ADDNAN/+/' -e 's/TRENDNAN/TREND/' -e 's/MAXNAN/MAX/' -e 's/MINNAN/MIN/' $STATSV2_USR/statsV2-graphs.sh
 	sed -i -e '/axis-format/d' $STATSV2_USR/statsV2-graphs.sh
 fi
 
 echo "Fix fr24feed_updater"
-echo $1_LINE
+echo $LINE_1
 
 # FIX readonly remount logic in fr24feed update script
 sed -i -e 's?$(mount | grep " on / " | grep rw)?{ mount | grep " on / " | grep rw; }?' /usr/lib/fr24/fr24feed_updater.sh &>/dev/null || true
@@ -444,7 +444,7 @@ sed -i -e 's?$(mount | grep " on / " | grep rw)?{ mount | grep " on / " | grep r
 # START =======================================================================
 
 echo "Start lighttpd"
-echo $1_LINE
+echo $LINE_1
 
 # RESTART lighttpd
 if [[ $lighttpd == yes ]]; then
@@ -452,19 +452,19 @@ if [[ $lighttpd == yes ]]; then
 fi
 
 echo "Start collectd"
-echo $1_LINE
+echo $LINE_1
 
 # START collectd
 systemctl enable collectd &>/dev/null
 systemctl restart collectd &>/dev/null || true
 
 echo "Check collectd"
-echo $1_LINE
+echo $LINE_1
 
 # CHECK collectd
 if ! systemctl status collectd &>/dev/null; then
     echo "collectd isn't working, trying to install various libpython versions to work around the issue."
-    echo $1_LINE
+    echo $LINE_1
     aptUpdate
     apt-get install --no-install-suggests --no-install-recommends -y 'libpython2.7' || true
     apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.10' || \
@@ -475,25 +475,25 @@ if ! systemctl status collectd &>/dev/null; then
     systemctl restart collectd || true
     if ! systemctl status collectd &>/dev/null; then
         echo "Showing the log for collectd using this command: journalctl --no-pager -u collectd | tail -n40"
-        echo $1_LINE
+        echo $LINE_1
         journalctl --no-pager -u collectd | tail -n40
-        echo $1_LINE
+        echo $LINE_1
         echo "collectd still isn't working, you can try and rerun the install script at some other time."
         echo "or report this issue with the full 40 lines above."
-        echo $1_LINE
+        echo $LINE_1
     fi
 fi
 
 echo "Start statsV2"
-echo $1_LINE
+echo $LINE_1
 
 # START statsV2
 systemctl enable statsV2
 systemctl restart statsV2
 
-echo $1_LINE
-echo $1_LINE
+echo $LINE_1
+echo $LINE_1
 echo "All done! Graphs available at http://$(ip route | grep -m1 -o -P 'src \K[0-9,.]*')/statsV2"
 echo "It may take up to 10 minutes until the first data is displayed"
-echo $1_LINE
-echo $1_LINE
+echo $LINE_1
+echo $LINE_1
