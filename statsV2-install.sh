@@ -288,6 +288,10 @@ cp statsV2-dump978.py $STATSV2_USR
 cp statsV2-dump1090.py $STATSV2_USR
 cp statsV2-system.py $STATSV2_USR
 
+echo "exit this far nothing has happened"
+echo $1_LINE
+exit 1
+
 # SETUP COLLECTD ==============================================================
 
 echo "Setup collectd conf"
