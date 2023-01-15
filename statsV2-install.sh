@@ -280,7 +280,7 @@ cp statsV2-graphs-scatter.sh $STATSV2_USR
 
 chmod u+x $STATSV2_USR/*.sh
 
-cp statsV2-dump1090.db $STATSV2_USR
+cp statsV2-collectd.db $STATSV2_USR
 
 cp statsV2-dump978.py $STATSV2_USR
 cp statsV2-dump1090.py $STATSV2_USR
