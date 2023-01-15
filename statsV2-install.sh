@@ -271,7 +271,6 @@ cp LICENSE $STATSV2_USR
 cp README.md $STATSV2_USR
 
 cp statsV2-install.sh $STATSV2_USR
-cp statsV2-uninstall.sh $STATSV2_USR
 
 cp statsV2-run.sh $STATSV2_USR
 cp statsV2-service.sh $STATSV2_USR
