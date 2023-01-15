@@ -264,7 +264,7 @@ fi
 
 # INSTALL STATSV2 GENERAL =====================================================
 
-echo "Install of statsV2 files"
+echo "Install statsV2 files"
 echo $LINE_BREAK
 
 cp LICENSE $STATSV2_USR
