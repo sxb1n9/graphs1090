@@ -1,14 +1,21 @@
 Based on the work by https://github.com/wiedehopf/graphs1090
 
-# Change name from graph1090 to statsV2 or stats
-# Change directories and such so that statsV2 can run at the same time as graphs1090
+NOTES
+- So far it is the same as graphs1090 but can run in parrallel and is simplified
 
 UPDATES
-1. Simplify Graphs for 1090 and 978 so that decisions can be made easier
-2. Multipages of stats so they are broken out based on freq
-3. All page for total traffic stats like count of SW or AA or D planes 
-4. All time best for distance / number of positions / number of aircraft ect.   
-5. Trending Data
+- Change name from graph1090 to statsV2 or stats
+- Change directories and such so that statsV2 can run at the same time as graphs1090
+- Simplify file structure
+- Simplify collections 1st pass
+- Update Install and Uninstall
+
+PENDING UPDATES
+- Simplify Graphs for 1090 and 978 so that decisions can be made easier
+- Multipages of stats so they are broken out based on freq
+- All page for total traffic stats like count of SW or AA or D planes 
+- All time best for distance / number of positions / number of aircraft ect.   
+- Trending Data
 
 LOCATIONS
 - statsV2
