@@ -8,7 +8,7 @@
 
 # SET paths
 REPO="https://github.com/bing281/graphs1090"
-BRANCH="V2"
+BRANCH="v2"
 
 # main ipath
 STATSV2_USR=/usr/share/statsV2
