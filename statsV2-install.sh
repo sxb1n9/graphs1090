@@ -286,10 +286,6 @@ cp statsV2-dump978.py $STATSV2_USR
 cp statsV2-dump1090.py $STATSV2_USR
 cp statsV2-system.py $STATSV2_USR
 
-echo "exit this far nothing has happened"
-echo $LINE_BREAK
-exit 1
-
 # SETUP COLLECTD ==============================================================
 
 echo "Setup collectd conf"
@@ -377,25 +373,25 @@ fi
 echo "Setup SYMLINKS 1090"
 echo $LINE_BREAK
 
-SYM=/usr/share/statsV2/data-symlink
-mkdir -p $SYM
+mkdir -p $SYM1090
+
 if [ -f /run/dump1090-fa/stats.json ]; then
-    ln -snf /run/dump1090-fa $SYM/data
+    ln -snf /run/dump1090-fa $SYM1090/data
     sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
 elif [ -f /run/readsb/stats.json ]; then
-    ln -snf /run/readsb $SYM/data
+    ln -snf /run/readsb $SYM1090/data
     sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
 elif [ -f /run/adsbexchange-feed/stats.json ]; then
-    ln -snf /run/adsbexchange-feed $SYM/data
+    ln -snf /run/adsbexchange-feed $SYM1090/data
     sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
 elif [ -f /run/dump1090/stats.json ]; then
-    ln -snf /run/dump1090 $SYM/data
+    ln -snf /run/dump1090 $SYM1090/data
     sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
 elif [ -f /run/dump1090-mutability/stats.json ]; then
-    ln -snf /run/dump1090-mutability $SYM/data
+    ln -snf /run/dump1090-mutability $SYM1090/data
     sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
 elif [ -f /run/readsb/stats.json ]; then
-    ln -snf /run/readsb $SYM/data
+    ln -snf /run/readsb $SYM1090/data
     sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
 else
 	echo "Can't find any 1090 instances, please check you already have dump1090 installed"
@@ -405,14 +401,13 @@ fi
 echo "Setup SYMLINKS 978"
 echo $LINE_BREAK
 
-# INSTALL symlinks 978 to collectd.conf
-SYM=/usr/share/statsV2/978-symlink
-mkdir -p $SYM
+mkdir -p $SYM978
+
 if [ -f /run/skyaware978/aircraft.json ]; then
-    ln -snf /run/skyaware978 $SYM/data
+    ln -snf /run/skyaware978 $SYM978/data
     sed -i -e 's?URL_DUMP978 .*?URL_DUMP978 "file:///usr/share/statsV2/978-symlink"?' /etc/collectd/collectd.conf
 elif [ -f /run/adsbexchange-978/aircraft.json ]; then
-    ln -snf /run/adsbexchange-978 $SYM/data
+    ln -snf /run/adsbexchange-978 $SYM978/data
     sed -i -e 's?URL_DUMP978 .*?URL_DUMP978 "file:///usr/share/statsV2/978-symlink"?' /etc/collectd/collectd.conf
 else
 	echo "Can't find any 978 instances, please check you already have dump978 installed"
