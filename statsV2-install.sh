@@ -8,7 +8,7 @@
 
 # SET paths
 REPO="https://github.com/bing281/graphs1090"
-BRANCH="master"
+BRANCH="V2"
 
 # main ipath
 STATSV2_USR=/usr/share/statsV2
@@ -139,7 +139,6 @@ echo "Install dependancies"
 echo $LINE_BREAK
 
 # MAKE directories
-mkdir -p $STATSV2_USR/installed
 mkdir -p $STATSV2_VAR/scatter
 
 # CHECK commands for installed
