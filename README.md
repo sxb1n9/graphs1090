@@ -46,6 +46,11 @@ COLLECTD FILES
 - statsV2-collectd.conf
 - statsV2-collectd.db
 
+## STATSV2 Installation / Update to current version:
+```
+sudo bash -c "$(curl -L -o - https://github.com/wiedehopf/graphs1090/raw/v2/statsV2-install.sh)"
+```
+
 
 ![Screenshot](https://raw.githubusercontent.com/wiedehopf/graphs1090/screenshots/screenshot1.png)
 ![Screenshot](https://raw.githubusercontent.com/wiedehopf/graphs1090/screenshots/screenshot2.png)
