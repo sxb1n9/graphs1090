@@ -1,18 +1,20 @@
 #!/bin/bash
 
-DOCUMENTROOT=/run/graphs1090
+DOCUMENTROOT=/run/statsV2
 
 DB=/var/lib/collectd/rrd
-# settings in /etc/default/graphs1090 will overwrite the DB directory
+# settings in /etc/default/statsV2 will overwrite the DB directory
 
 renice -n 19 -p $$
 
 trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
 
-mult() {
+mult()
+{
 	echo $1 $2 | LC_ALL=C awk '{printf "%.9f", $1 * $2}'
 }
-div() {
+div()
+{
 	echo $1 $2 | LC_ALL=C awk '{printf "%.9f", $1 / $2}'
 }
 
@@ -51,11 +53,9 @@ LRED=FFCCCB
 LIGHTYELLOW=FFFF99
 AYELLOW=ffcc00
 
-
 AGRAY=dddddd
 
-
-source /etc/default/graphs1090
+source /etc/default/statsV2
 
 if [[ "$colorscheme" == "dark" ]]; then
     CANVAS=161618
@@ -77,8 +77,6 @@ if [[ "$colorscheme" == "dark" ]]; then
 
     GREEN=386619
 
-
-
     LBLUE=7fc7ff
     BLUE=1cb992
     ABLUE=0c5685
@@ -94,11 +92,10 @@ if [[ "$colorscheme" == "dark" ]]; then
     LIGHTYELLOW=444444
     AYELLOW=cca300
 
-
     AGRAY=2a2e31
 fi
 
-source /etc/default/graphs1090
+source /etc/default/statsV2
 
 if [[ -n $ether ]]; then
     ether="interface-${ether}"
@@ -117,7 +114,6 @@ if [[ -n $disk ]]; then
 else
     disk="$(ls ${DB}/localhost | grep disk -m1)"
 fi
-
 
 if ! [ $position_scaling ]; then
     position_scaling=0.1
@@ -143,7 +139,6 @@ case $graph_size in
 		;;
 esac
 
-
 fontsize="-n TITLE:$(mult 1.1 $font_size):. -n AXIS:$(mult 0.8 $font_size):. -n UNIT:$(mult 0.9 $font_size):. -n LEGEND:$(mult 0.9 $font_size):."
 grid="-c GRID#FFFFFF --grid-dash 2:1"
 options="$grid $fontsize -e $(date +%H:%M) $colors"
@@ -154,7 +149,6 @@ if [[ $all_large == "yes" ]]; then
 	small="$options --width $lwidth --height $lheight"
 fi
 
-
 # load bash sleep builtin if available
 [[ -f /usr/lib/bash/sleep ]] && enable -f /usr/lib/bash/sleep sleep || true
 
@@ -164,8 +158,8 @@ if ! [ -z "$2" ]; then
 fi
 
 #checks a file name for existence and otherwise uses an "empty" rrd as a source so the graphs can still be printed even if the file is missing
-
-check() {
+check()
+{
 	if [ -f $1 ]
 	then
 		echo $1
@@ -174,7 +168,6 @@ check() {
 		echo "${DB}/$collectd_hostname/dump1090-$dump1090_instance/dump1090_dbfs-NaN.rrd"
 	fi
 }
-
 
 ## DUMP1090 GRAPHS
 
@@ -216,7 +209,6 @@ aircraft_graph() {
 		--watermark "Drawn: $nowlit";
 	mv "$1.tmp" "$1"
 	}
-
 
 aircraft_message_rate_graph() {
 	if [ $ul_rate_per_aircraft ]; then upper="--rigid --upper-limit $ul_rate_per_aircraft"; else upper=""; fi
@@ -966,7 +958,6 @@ range_graph(){
 		--watermark "Drawn: $nowlit";
 	mv "$1.tmp" "$1"
 	}
-
 
 signal_graph() {
 	$pre

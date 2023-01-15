@@ -1,7 +1,6 @@
 #!/bin/bash
 
-source /etc/default/graphs1090
-
+source /etc/default/statsV2
 
 if [[ -z $DRAW_INTERVAL ]]; then
     DRAW_INTERVAL=60
@@ -21,11 +20,11 @@ else
 fi
 
 echo "Generating all graphs"
-/usr/share/graphs1090/boot.sh $GRAPH_DELAY
+/usr/share/statsV2/statsV2-run.sh $GRAPH_DELAY
 
 graphs() {
 	#echo "Generating $1 graphs"
-	/usr/share/graphs1090/graphs1090.sh $1 $GRAPH_DELAY &>/dev/null
+	/usr/share/statsV2/statsV2-graphs.sh $1 $GRAPH_DELAY &>/dev/null
 }
 
 counter=0
@@ -71,6 +70,6 @@ do
 
     if [[ $(date +%H:%M) == 00:07 ]]; then
         echo running scatter.sh
-        /usr/share/graphs1090/scatter.sh
+        /usr/share/statsV2/statsV2-scatter.sh
     fi
 done

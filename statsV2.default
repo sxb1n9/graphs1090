@@ -1,5 +1,5 @@
 # after saving this file, run
-# sudo systemctl restart graphs1090
+# sudo systemctl restart statsV2
 # to update the graphs and web interface
 
 # how often graphs are drawn in seconds (default: 60)
@@ -76,7 +76,6 @@ disk=
 # net stats displayed for these two devices (i.e. wlp3s0 wlan0 eth0 enp0s25)
 ether=
 wifi=
-
 
 # set time zone for rrdtool graphs
 #export TZ=Europe/Berlin

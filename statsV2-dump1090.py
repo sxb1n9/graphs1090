@@ -15,7 +15,6 @@ else:
     def has_key(book, key):
         return book.has_key(key)
 
-
 def handle_config(root):
     for child in root.children:
         instance_name = None

@@ -1,3 +1,52 @@
+Based on the work by https://github.com/wiedehopf/graphs1090
+
+# Change name from graph1090 to statsV2 or stats
+# Change directories and such so that statsV2 can run at the same time as graphs1090
+
+UPDATES
+1. Simplify Graphs for 1090 and 978 so that decisions can be made easier
+2. Multipages of stats so they are broken out based on freq
+3. All page for total traffic stats like count of SW or AA or D planes 
+4. All time best for distance / number of positions / number of aircraft ect.   
+5. Trending Data
+
+LOCATIONS
+- statsV2
+        - /usr/share/statsV2 = script files
+        - /usr/share/statsV2/html = web files
+        - /var/lib/statsV2 = ?
+        - /etc/default/statsV2 = ?
+        - /run/statsV2 = ram location
+- collectd
+        - /etc/collectd = collectd conf files
+        - /var/lib/collectd = collectd plugins
+        - /var/lib/collectd/rrd = collectd rrd files 
+- lighttpd
+        - /etc/lighttpd = lighttpd conf files
+                - /etc/lighttpd/conf-enabled
+                - /etc/lighttpd/conf-available
+- service
+        - /lib/systemd/system = service conf files
+
+README FILES
+- README.md = main readme
+- README.JSON.md = dump1090-fa JSON file formats
+
+INSTALL / UNINSTALL FILES
+- statsV2-install.sh = install & uninstall script
+
+SERVICE FILES
+- statsV2.servie = service creation file
+- statsV2.service.sh = service run file
+
+LIGHTTPD FILES
+- 88-statsV2.conf
+
+COLLECTD FILES
+- statsV2-collectd.conf
+- statsV2-collectd.db
+
+
 ![Screenshot](https://raw.githubusercontent.com/wiedehopf/graphs1090/screenshots/screenshot1.png)
 ![Screenshot](https://raw.githubusercontent.com/wiedehopf/graphs1090/screenshots/screenshot2.png)
 
