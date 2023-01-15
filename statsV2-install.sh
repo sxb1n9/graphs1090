@@ -327,8 +327,12 @@ do
     # no action on existing interfaces
     fgrep -q 'Interface "'$iface'"' /etc/collectd/collectd.conf && continue
     # only add interface starting with et en and wl
-    case $iface in et*|en*|wl*)
-        sed -ie '/<Plugin "interface">/{a\Interface "'$iface'"}' /etc/collectd/collectd.conf;
+    case $iface in
+        et*|en*|wl*)
+sed -ie '/<Plugin "interface">/{a\
+    Interface "'$iface'"
+}' /etc/collectd/collectd.conf
+        ;;
     esac
 done
 
