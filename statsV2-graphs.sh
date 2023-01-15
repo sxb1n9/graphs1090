@@ -1307,8 +1307,8 @@ END_TIME=$(date -d -1min '+%H:%M')
 nowlit=$(date -d "$END_TIME" '+%Y-%m-%d %H:%M %Z')
 
 # Changing the following two variables means you need to change the names in html/graph.js as well so that the graphs are correctly displayed
-dump1090_instance="localhost"
-collectd_hostname="localhost"
+dump1090_instance="test"
+collectd_hostname="test"
 
 if [ -z $1 ]
 then
