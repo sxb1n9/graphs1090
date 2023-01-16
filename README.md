@@ -1,66 +1,119 @@
 Based on the work by https://github.com/wiedehopf/graphs1090
 
-NOTES
-- So far it is the same as graphs1090 but can run in parrallel and is simplified
+# NOTES
+- So far it is the same as graphs1090 but can run in parrallel and is simplified with some refactoring and simplifying of the codebase
 
-UPDATES
+## UPDATES
 - Change name from graph1090 to statsV2 or stats
 - Change directories and such so that statsV2 can run at the same time as graphs1090
 - Simplify file structure
 - Simplify collections 1st pass
 - Update Install and Uninstall
+- Refactor Naming
 
-PENDING UPDATES
+## PENDING UPDATES
 - Simplify Graphs for 1090 and 978 so that decisions can be made easier
 - Multipages of stats so they are broken out based on freq
 - All page for total traffic stats like count of SW or AA or D planes 
 - All time best for distance / number of positions / number of aircraft ect.   
 - Trending Data
 
-LOCATIONS
+## LOCATIONS
 - statsV2
-        - /usr/share/statsV2 = script files
-        - /usr/share/statsV2/html = web files
-        - /var/lib/statsV2 = ?
-        - /etc/default/statsV2 = ?
-        - /run/statsV2 = ram location
+        - /usr/share/statsV2 = statsV2 install script files
+        - /usr/share/statsV2/html = statsV2 install web files
+        - /var/lib/statsV2 = statsV2 data directory (/scatter)
+        - /etc/default/statsV2 = statsV2 running config file
+        - /run/statsV2 = statsV2 temporary ram location
 - collectd
-        - /etc/collectd = collectd conf files
+        - /etc/collectd = collectd conf file
         - /var/lib/collectd = collectd plugins
         - /var/lib/collectd/rrd = collectd rrd files 
 - lighttpd
-        - /etc/lighttpd = lighttpd conf files
-                - /etc/lighttpd/conf-enabled
-                - /etc/lighttpd/conf-available
+        - /etc/lighttpd = lighttpd conf file original
+        - /etc/lighttpd/conf-enabled = lighttpd conf files enabled via symlink to available 
+        - /etc/lighttpd/conf-available = lighttpd conf files stage
 - service
         - /lib/systemd/system = service conf files
 
-README FILES
+## README FILES
 - README.md = main readme
 - README.JSON.md = dump1090-fa JSON file formats
+- README.CONFIG.md = STATSV2 configuration
 
-INSTALL / UNINSTALL FILES
+## INSTALL / UNINSTALL FILES
 - statsV2-install.sh = install & uninstall script
 
-SERVICE FILES
+## SERVICE FILES
 - statsV2.servie = service creation file
 - statsV2.service.sh = service run file
 
-LIGHTTPD FILES
-- 88-statsV2.conf
+## LIGHTTPD FILES
+- statsV2-lighttpd.conf
 
 COLLECTD FILES
 - statsV2-collectd.conf
 - statsV2-collectd.db
 
-## STATSV2 Installation / Update to current version:
+## STATSV2 Install / Update:
 ```
 sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh)"
 ```
 
+## STATSV2 Uninstall:
+```
+sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh uninstall)"
+```
 
-![Screenshot](https://raw.githubusercontent.com/wiedehopf/graphs1090/screenshots/screenshot1.png)
-![Screenshot](https://raw.githubusercontent.com/wiedehopf/graphs1090/screenshots/screenshot2.png)
+## STATSV2 Configuration (optional):
+Edit the configuration file to change graph layout options, for example size:
+```
+sudo nano /etc/default/statsV2
+```
+Ctrl-x to exit, y (yes) and enter to save.
+
+Checkout available options: <https://raw.githubusercontent.com/wiedehopf/bing281/v2/README.CONFIG.md>
+
+Reset configuration to defaults (need to update for STATSV2)
+```
+sudo cp /usr/share/statsV2/statsV2.default /etc/default/statsV2
+```
+
+### Non-standard configuration:
+
+If your local map is not reachable at /skyaware or /dump1090-fa or /dump1090 you can edit the following the file to input the URL of your local stats.json file:
+
+```
+sudo nano /etc/collectd/collectd.conf
+```
+
+Find this section:
+```
+<Plugin python>
+        ModulePath "/usr/share/statsV2"
+        LogTraces true
+        Import "statsV2-dump1090"
+        <Module statsV2-dump1090>
+                <Instance localhost>
+                        URL "http://localhost/dump1090-fa/data/"
+                </Instance>
+        </Module>
+</Plugin>
+```
+And change the URL to where your dump1090 data/stats.json file is located
+Ctrl-x to exit, y (yes) and enter to save.
+
+After changing the URL, restart collectd service:
+```
+sudo systemctl restart collectd
+```
+
+Verify that collectd service is running: 
+```
+sudo systemctl status collectd
+```
+
+# OLD GRAPH1090 INFORMATION BelOW
 
 # graphs1090
 ![Screenshot](https://raw.githubusercontent.com/wiedehopf/graphs1090/screenshots/messages_24h.png)
@@ -68,43 +121,12 @@ Graphs for readsb (wiedehopf fork) and dump1090-fa (based on dump1090-tools by m
 
 Also works for other dump1090 variants supplying stats.json
 
-## Installation / Update to current version:
-```
-sudo bash -c "$(curl -L -o - https://github.com/wiedehopf/graphs1090/raw/master/install.sh)"
-```
-
-Note on data loss: When removing or losing power you will lose graph data generated after 23:42 of the previous day.
-To avoid that issue `sudo shutdown now` before unplugging the pi. See the section on reducing writes for more detail.
-
-## Configuration (optional):
-Edit the configuration file to change graph layout options, for example size:
-```
-sudo nano /etc/default/graphs1090
-```
-Ctrl-x to exit, y (yes) and enter to save.
-
-Checkout available options: <https://raw.githubusercontent.com/wiedehopf/graphs1090/master/default>
-Recently added: colorscheme=dark
-
-Reset configuration to defaults:
-```
-sudo cp /usr/share/graphs1090/default-config /etc/default/graphs1090
-```
-
-
 ## View the graphs:
 
 Click the following URL and replace the IP address with the IP address of the Raspberry Pi you installed combine1090 on.
-
-http://192.168.x.yy/graphs1090
-
-or
-
-http://192.168.x.yy/perf
-
-or
-
-http://192.168.x.yy:8542
+```
+http://<deviceip>/statsV2
+```
 
 ### Adjusting gain
 
@@ -187,33 +209,6 @@ vm.dirty_ratio = 40
 vm.dirty_background_ratio = 30
 vm.dirty_expire_centisecs = 360000
 EOF
-```
-
-
-### Non-standard configuration:
-
-If your local map is not reachable at /dump1090-fa or /dump1090, you can edit the following the file to input the URL of your local map:
-
-```/etc/collectd/collectd.conf```
-
-Find this section:
-
-```
-<Plugin python>
-        ModulePath "/usr/share/graphs1090"
-        LogTraces true
-        Import "dump1090"
-        <Module dump1090>
-                <Instance localhost>
-                        URL "http://localhost/dump1090-fa"
-                </Instance>
-        </Module>
-</Plugin>
-```
-And change the URL to where your dump1090 webinterface is located.
-After changing the URL, restart collectd:
-```
-sudo systemctl restart collectd
 ```
 
 ### Resetting the database format

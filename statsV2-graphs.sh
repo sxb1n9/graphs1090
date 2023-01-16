@@ -1,12 +1,9 @@
 #!/bin/bash
 
 DOCUMENTROOT=/run/statsV2
-
-DB=/var/lib/collectd/rrd
-# settings in /etc/default/statsV2 will overwrite the DB directory
+DB=/var/lib/collectd/rrd														# settings in /etc/default/statsV2 will overwrite the DB directory
 
 renice -n 19 -p $$
-
 trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
 
 mult()
@@ -171,9 +168,14 @@ check()
 
 ## DUMP1090 GRAPHS
 
-aircraft_graph() {
+aircraft_graph()
+{
 	$pre
-	if [ $ul_aircraft ]; then upper="--rigid --upper-limit $ul_aircraft"; else upper=""; fi
+	if [ $ul_aircraft ]; then
+		upper="--rigid --upper-limit $ul_aircraft";
+	else
+		upper="";
+	fi
 	rrdtool graph \
 		"$1.tmp" \
 		--end "$END_TIME" \
@@ -208,7 +210,7 @@ aircraft_graph() {
 		"LINE1:gps#$BLUE:" \
 		--watermark "Drawn: $nowlit";
 	mv "$1.tmp" "$1"
-	}
+}
 
 aircraft_message_rate_graph() {
 	if [ $ul_rate_per_aircraft ]; then upper="--rigid --upper-limit $ul_rate_per_aircraft"; else upper=""; fi

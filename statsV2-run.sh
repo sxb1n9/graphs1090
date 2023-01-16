@@ -1,22 +1,17 @@
 #!/bin/bash
 
 source /etc/default/statsV2
-IHTML=/usr/share/statsV2/html/index.html
 
-# fontconfig writes stuff to that directory for no good reason
-# statsV2 is mostly used on RPis, avoiding frequent disk writes is preferred
-# if this fails, no big deal either.
-if ! mount | grep -qs -e /var/cache/fontconfig &>/dev/null; then
-    mount -o rw,nosuid,nodev,relatime,size=32000k,mode=755 -t tmpfs tmpfs /var/cache/fontconfig &>/dev/null || true
-fi
+STATSV2_INDEX_HTML=/usr/share/statsV2/html/index.html
 
-# load bash sleep builtin if available
+# LOAD bash sleep builtin if available
 [[ -f /usr/lib/bash/sleep ]] && enable -f /usr/lib/bash/sleep sleep || true
 
+# SET color scheme
 if [[ $colorscheme == "dark" ]]; then
-    sed -i -e 's/href="bootstrap.custom..*.css"/href="bootstrap.custom.dark.css"/' "$IHTML"
+    sed -i -e 's/href="bootstrap.custom..*.css"/href="bootstrap.custom.dark.css"/' "$STATSV2_INDEX_HTML"
 else
-    sed -i -e 's/href="bootstrap.custom..*.css"/href="bootstrap.custom.light.css"/' "$IHTML"
+    sed -i -e 's/href="bootstrap.custom..*.css"/href="bootstrap.custom.light.css"/' "$STATSV2_INDEX_HTML"
 fi
 
 function checkrrd()
@@ -54,10 +49,12 @@ function show_hide()
     fi
 }
 
+# SHOW / HIDE graphs
 show_hide dump1090_messages-messages_978.rrd dump978
 show_hide airspy_rssi-max.rrd airspy
 show_hide dump1090_misc-gain_db.rrd dump1090-misc
 
+# ENABLE DISABLE all_large
 if [[ $all_large == "yes" ]]; then
     if grep -qs -e 'flex: 50%; // all_large' /usr/share/statsV2/html/portal.css; then
         sed -i -e 's?flex: 50%; // all_large?flex: 100%; // all_large?' /usr/share/statsV2/html/portal.css
@@ -70,21 +67,18 @@ else
     fi
 fi
 
+# EXIT if no graphs
 if [[ $1 == "nographs" ]]; then
 	exit 0
 fi
 
-# disable this for the moment
-#if rrdtool info /var/lib/collectd/rrd/localhost/system_stats/memory-used.rrd | grep -qs 'MIN'; then
-	#cp -T -r -n /var/lib/collectd/rrd/localhost /var/lib/collectd/rrd/rme_rra_backup
-	#/usr/share/graphs1090/rem_rra.sh /var/lib/collectd/rrd/localhost/
-#fi
-
+# SLEEP 5
 while ! [[ -d $DB ]] && sleep 5; do
-    echo Sleeping a bit, waiting for database directory / collectd to start.
+    echo "Sleeping a bit, waiting for database directory / collectd to start."
     true
 done
 
+# CREATE all graphs
 for i in 24h 8h 2h 48h 7d 14d 30d 90d 180d 365d 730d 1095d 1825d 3650d; do
-	/usr/share/statsV2/statsV2.sh $i $1 &>/dev/null
+	/usr/share/statsV2/statsV2-graphs.sh $i $1 &>/dev/null
 done

@@ -2,42 +2,46 @@
 
 source /etc/default/statsV2
 
+# DRAW_INTERVAL doesn't exist set to default 60
 if [[ -z $DRAW_INTERVAL ]]; then
     DRAW_INTERVAL=60
 fi
 
+# REMOVE decimal & set as BASE 10 to remove leading 0's
 DRAW_INTERVAL=$(cut -d '.' -f1 <<< $DRAW_INTERVAL)
 DRAW_INTERVAL=$(( 10#$DRAW_INTERVAL ))
 
+# DRAW_INTERVAL minimum 1
 if (( DRAW_INTERVAL < 1 )); then
     DRAW_INTERVAL=1
 fi
 
+# SET GRAPH_DELAY
 if (( DRAW_INTERVAL < 20 )); then
     GRAPH_DELAY=0
 else
     GRAPH_DELAY=0.33
 fi
 
-echo "Generating all graphs"
-/usr/share/statsV2/statsV2-run.sh $GRAPH_DELAY
+echo "Generating all graphs upon startup"
+/usr/share/statsV2/statsV2-graphs.sh $GRAPH_DELAY
 
-graphs() {
-	#echo "Generating $1 graphs"
+graphs()
+{
+	echo "Generating $1 graphs"
 	/usr/share/statsV2/statsV2-graphs.sh $1 $GRAPH_DELAY &>/dev/null
 }
 
 counter=0
 hour_done=0
 
-# load bash sleep builtin if available
-[[ -f /usr/lib/bash/sleep ]] && enable -f /usr/lib/bash/sleep sleep || true
+[[ -f /usr/lib/bash/sleep ]] && enable -f /usr/lib/bash/sleep sleep || true     # LOAD bash sleep builtin if available
 
 while wait;
 do
-    SEC=$(( 10#$(date -u +%s) ))
+    SEC=$(( 10#$(date -u +%s) ))                                                # GET UNIX SECONDS
     EARLY=$(( DRAW_INTERVAL * 3 / 4 - (SEC % DRAW_INTERVAL) ))
-    #echo $(( SEC % DRAW_INTERVAL )) $EARLY $(( DRAW_INTERVAL + EARLY - 1))
+    echo $(( SEC % DRAW_INTERVAL )) $EARLY $(( DRAW_INTERVAL + EARLY - 1))
     if (( EARLY < -1 )); then
         sleep $(( DRAW_INTERVAL + EARLY - 1))
         continue
@@ -45,9 +49,9 @@ do
         sleep $EARLY
     fi
     if (( EARLY == -1 )); then
-        sleep $(( $DRAW_INTERVAL - 1 )) & # wait in the while condition
+        sleep $(( $DRAW_INTERVAL - 1 )) &                                       # wait in the while condition
     else
-        sleep $DRAW_INTERVAL & # wait in the while condition
+        sleep $DRAW_INTERVAL &                                                  # wait in the while condition
     fi
 
     m=$(( SEC / DRAW_INTERVAL))
@@ -69,7 +73,7 @@ do
     fi
 
     if [[ $(date +%H:%M) == 00:07 ]]; then
-        echo running scatter.sh
+        echo "running statsV2-scatter.sh"
         /usr/share/statsV2/statsV2-scatter.sh
     fi
 done

@@ -5,9 +5,9 @@ import subprocess
 
 def handle_config(root):
 
-    collectd.register_read(callback=handle_read, name='system_stats')
+    collectd.register_read(callback=handle_read, name='statsV2-system')
 
-V=collectd.Values(plugin='system_stats', time=0)
+V=collectd.Values(plugin='statsV2-system', time=0)
 
 
 def handle_read():
@@ -53,4 +53,4 @@ def handle_read():
 
     return
 
-collectd.register_config(callback=handle_config, name='system_stats')
+collectd.register_config(callback=handle_config, name='statsV2-system')
