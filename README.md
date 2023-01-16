@@ -55,17 +55,22 @@ COLLECTD FILES
 - statsV2-collectd.conf
 - statsV2-collectd.db
 
-## STATSV2 Install / Update:
+# STATSV2 INSTALL:
 ```
-sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh)"
+sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh install)"
 ```
 
-## STATSV2 Uninstall:
+# STATS32 UPDATE:
+```
+sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh update)"
+```
+
+# STATSV2 UNINSTALL:
 ```
 sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh uninstall)"
 ```
 
-## STATSV2 Configuration (optional):
+# STATSV2 CONFIGURE (optional):
 Edit the configuration file to change graph layout options, for example size:
 ```
 sudo nano /etc/default/statsV2
@@ -79,7 +84,7 @@ Reset configuration to defaults (need to update for STATSV2)
 sudo cp /usr/share/statsV2/statsV2.default /etc/default/statsV2
 ```
 
-### Non-standard configuration:
+## STATSV2 Non-standard configuration:
 
 If your local map is not reachable at /skyaware or /dump1090-fa or /dump1090 you can edit the following the file to input the URL of your local stats.json file:
 

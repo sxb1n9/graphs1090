@@ -1,93 +1,89 @@
 #!/bin/bash
 
+# NOTES =======================================================================
+
+# Install / Uninstall / Update statsV2
+
+# INSTALL
+# sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh install)"
+
+# INSTALL MANUAL
+# sudo apt-get install -y --no-install-suggests --no-install-recommends git
+# sudo git clone --depth 1 --single-branch --branch "v2" "https://github.com/sxb1n9/graphs1090" "/usr/share/statsV2/git"
+# sudo /usr/share/statsV2/git/statsV2-install.sh install
+
+# UNINSTALL 
+# sudo /usr/share/statsV2/statsV2-install.sh uninstall
+
+# UPDATE
+# 
+
 # ARGUMENTS ===================================================================
 
-# ARGUMENT $1 : none or uninstall
-# INSTALL   statsV2-install.sh
+# ARGUMENT $1 : none(defaults install) | install | uninstall | update
+# INSTALL   statsV2-install.sh install
+# UPDATE    statsV2-install.sh update
 # UNINSTALL statsV2-install.sh uninstall
 
-# PATHS & VARIABLES ===========================================================
+# IMPORTS =====================================================================
 
-# REPO and BRANCH
-REPO="https://github.com/bing281/graphs1090"
-BRANCH="v2"
-
-STATSV2_USR=/usr/share/statsV2
-STATSV2_ETC=/etc/default/statsV2
-STATSV2_VAR=/var/lib/statsV2
-
-COLLECTD_ETC=/etc/collectd
-COLLECTD_PLUGINS=/var/lib/collectd
-COLLECTD_RRD=/var/lib/collectd/rrd
-COLLECTD_RUN=/run/collectd
-
-LIGHTTPD_CONF=/etc/lighttpd
-LIGHTTPD_CONF_ENABLED=/etc/lighttpd/conf-enabled
-LIGHTTPD_CONF_AVAILABLE=/etc/lighttpd/conf-available
-
-SERVICE_CONF=/lib/systemd/system
-
-OS_PATH=/etc/os-release
-
-SYM978=/usr/share/statsV2/978-symlink
-SYM1090=/usr/share/statsV2/data-symlink
-
-FR24FEED_UPDATER_PATH=/usr/lib/fr24/fr24feed_updater.sh
-COLLECTD_CPU_AIRSPY_PATH=/run/collectd/localhost/dump1090-localhost/dump1090_cpu-airspy.rrd
-SLEEP_PATH=/usr/lib/bash/sleep
-
-# SET flags
-NEED_INSTALL=0
-
-# SET variables
-COMMANDS="git rrdtool wget unzip collectd"
-PACKAGES="git rrdtool wget unzip bash-builtins collectd-core"
-PACKAGE_COLLECTD="http://mirrors.kernel.org/ubuntu/pool/universe/c/collectd/collectd-core_5.12.0-11_amd64.deb"
-
-LINE_BREAK="--------------------------------------------------------------------------------"
+source statsV2-shared.sh
 
 # FUNCTIONS ==================================================================
 
-# aptUpdate - run apt update and wait for finish (update_done=yes)
+# aptUpdate
+# run apt update and wait for finish (update_done=yes)
 function aptUpdate()
 {
+    echo "aptUpdate $pacakge";
+
     if [[ $update_done != "yes" ]]; then
         apt update && update_done=yes || true
     fi
+
+    return 1
 }
 
-# getGIT $REPO $BRANCH $TARGET (directory)
+# aptInstall $package
+# run apt install for package
+function aptInstall()
+{
+    if [[ -z "$1" ]]; then
+        echo "aptInstall needs 1 arguments" 1>&2;
+        echo "aptInstall PACKAGE" 1>&2;
+        return -1; 
+    fi
+
+    package="$1";
+    echo "aptInstall $pacakge";
+    apt-get install -y --no-install-suggests --no-install-recommends $package
+
+	if ! command -v "$CMD" &>/dev/null; then
+		NEED_INSTALL=1
+	fi
+
+    return 1
+}
+
+# getGIT $REPO $BRANCH $TARGET(dir)
+# clones REPO BRANCH to TARGET directory and CD's to that directory
+# dependancy: git installed
 function getGIT()
 { 
     if [[ -z "$1" ]] || [[ -z "$2" ]] || [[ -z "$3" ]]; then
-        echo "getGIT wrong usage, check your script or tell the author!" 1>&2; 
-        return 1; 
+        echo "getGIT needs 3 arguments" 1>&2;
+        echo "getGIT REPO BRANCH TARGET(dir)" 1>&2;
+        return -1; 
     fi
 
     REPO="$1";
     BRANCH="$2";
     TARGET="$3";
-    pushd .;
-    tmp=/tmp/getGIT-tmp.$RANDOM.$RANDOM
+    echo "getGIT $1 $2 $3";
 
-    if cd "$TARGET" &>/dev/null && git fetch --depth 1 origin "$BRANCH" && git reset --hard FETCH_HEAD; then 
-        popd && return 0; 
-    fi
-    popd;
-    if ! cd /tmp || ! rm -rf "$TARGET"; then
-        return 1;
-    fi
-    if git clone --depth 1 --single-branch --branch "$2" "$1" "$3"; then
-        return 0;
-    fi
-    if wget -O "$tmp" "${REPO%".git"}/archive/$BRANCH.zip" && unzip "$tmp" -d "$tmp.folder"; then
-        if mv -fT "$tmp.folder/$(ls $tmp.folder)" "$TARGET"; then 
-            rm -rf "$tmp" "$tmp.folder";
-            return 0;
-        fi
-    fi
+    git clone --depth 1 --single-branch --branch "$BRANCH" "$REPO" "$TARGET"
+    cd $TARGET
 
-    rm -rf "$tmp" "$tmp.folder";
     return 1
 }
 
@@ -115,6 +111,8 @@ if [[ "$1" == "uninstall" ]]; then
     systemctl restart collectd
     rm -r $STATSV2_USR
 
+    rm -rd /usr/share/statsV2
+
     echo "FINISH UNINSTALL STATSV2"
     echo $LINE_BREAK
     echo "EXITING ..."
@@ -131,6 +129,13 @@ echo "SET error logging"
 set -e
 trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
 renice 10 $$
+
+aptUpdate
+aptInstall git
+getGit $REPO $BRANCH $STATSV2_USR/git
+
+echo "exiting"
+exit 1 
 
 # DEPENDANCIES ================================================================
 
