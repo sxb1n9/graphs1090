@@ -5,7 +5,7 @@
 # Install / Uninstall / Update statsV2
 
 # INSTALL
-# sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh install)"
+# sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh https://github.com/bing281/graphs1090/raw/v2/statsV2-share.sh)"
 
 # INSTALL MANUAL
 # sudo apt-get install -y --no-install-suggests --no-install-recommends git
