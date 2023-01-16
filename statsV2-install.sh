@@ -49,7 +49,7 @@ function aptInstall()
     if [[ -z "$1" ]]; then
         echo "aptInstall needs 1 arguments" 1>&2;
         echo "aptInstall PACKAGE" 1>&2;
-        return -1; 
+        return 0; 
     fi
 
     package="$1";
@@ -69,7 +69,7 @@ function getGIT()
     if [[ -z "$1" ]] || [[ -z "$2" ]] || [[ -z "$3" ]]; then
         echo "getGIT needs 3 arguments" 1>&2;
         echo "getGIT REPO BRANCH TARGET(dir)" 1>&2;
-        return -1; 
+        return 0; 
     fi
 
     REPO="$1";
