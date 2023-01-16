@@ -40,8 +40,6 @@ function aptUpdate()
     if [[ $update_done != "yes" ]]; then
         apt update && update_done=yes || true
     fi
-
-    return 1
 }
 
 # aptInstall $package
@@ -61,8 +59,6 @@ function aptInstall()
 	if ! command -v "$CMD" &>/dev/null; then
 		NEED_INSTALL=1
 	fi
-
-    return 1
 }
 
 # getGIT $REPO $BRANCH $TARGET(dir)
@@ -83,8 +79,6 @@ function getGIT()
 
     git clone --depth 1 --single-branch --branch "$BRANCH" "$REPO" "$TARGET"
     cd $TARGET
-
-    return 1
 }
 
 # UNINSTALL ===================================================================
