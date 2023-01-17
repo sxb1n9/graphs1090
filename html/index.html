@@ -16,18 +16,19 @@
 	<body>
 		<!-- TAB LINKS -->
 		<div class="tab">
-			<button class="tablinks" onclick="switchTab(event, 'GRAPHS1090')" id="defaultOpen">GRAPHS1090</button>
 			<button class="tablinks" onclick="switchTab(event, 'STATSV2')">STATSV2</button>
-
-			<script>
-			// Get the element with id="defaultOpen" and click on it
-			document.getElementById("defaultOpen").click();
-			</script>
+			<button class="tablinks" onclick="switchTab(event, 'GRAPHS1090')" id="defaultOpen">GRAPHS1090</button>
+			<button class="tablinks" onclick="switchTab(event, 'PIAWARE')">PIAWARE</button>
 		</div>
 
 		<!-- STATSV2 TAB CONTENT-->
 		<div id="STATSV2" class="tabcontent">
 			<h1>STATSV2 Graphs</h1>
+		</div>
+
+		<!-- PIAWARE TAB CONTENT-->
+		<div id="PIAWARE" class="tabcontent">
+			<h1>PIAWARE Graphs</h1>
 		</div>
 
 		<!-- GRAPHS1090 TAB CONTENT-->
@@ -251,10 +252,14 @@
 
 		<script type="text/javascript">
 			$('#graphs-link').addClass("active");
-
 		</script>
 
 		<script src="graphs.js"></script>
+
+		<script>
+			// Get the element with id="defaultOpen" and click on it
+			document.getElementById("defaultOpen").click();
+		</script>
 
 	</body>
 </html>
