@@ -74,7 +74,7 @@ function MAIN()
 
         # SETUP_COLLECTD
 
-        # CONTROL_SERVICE restart lighttpd enabled
+        CONTROL_SERVICE restart lighttpd enabled
         # CONTROL_SERVICE restart collectd enabled
         # CONTROL_SERVICE restart statsV2 enabled
         
