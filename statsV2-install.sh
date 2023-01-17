@@ -261,33 +261,6 @@ function INSTALL_SYMLINKS()
     fi
 }
 
-# RUN_INSTALL =================================================================
-# =============================================================================
-function RUN_INSTALL()
-{ 
-    # echo "UPDATE GIT - GIT PULL"
-    # cd $TARGET
-    # git pull
-
-    INSTALL_DEPENDANCIES
-
-    INSTALL_STATSV2
-
-    INSTALL_SYMLINKS
-}
-
-# RUN_UPDATE ==================================================================
-# =============================================================================
-function RUN_UPDATE()
-{ 
-    echo "UPDATE GIT - GIT PULL"
-    cd $TARGET
-    git pull
-
-    echo "GIT DIRECTORY UPDATED"
-    echo "RUN sudo /usr/share/statsV2/git/statsv2-install.sh install COMMAND to INSTALL/UPDATE"
-}
-
 # RUN_UNINSTALL ===============================================================
 # =============================================================================
 function RUN_UNINSTALL()
@@ -358,7 +331,15 @@ elif [[ $1 == "install" ]]; then
     echo "START INSTALL"
     echo $LINE_BREAK
 
-    RUN_INSTALL
+    # echo "UPDATE GIT - GIT PULL"
+    # cd $TARGET
+    # git pull
+
+    INSTALL_DEPENDANCIES
+
+    INSTALL_STATSV2
+
+    INSTALL_SYMLINKS
     
     echo $LINE_BREAK
     echo "FINISH INSTALL"
@@ -370,7 +351,12 @@ elif [[ $1 == "update" ]]; then
     echo "START UPDATE"
     echo $LINE_BREAK
 
-    RUN_UPDATE
+    echo "UPDATE GIT - GIT PULL"
+    cd $TARGET
+    git pull
+
+    echo "GIT DIRECTORY UPDATED"
+    echo "RUN sudo /usr/share/statsV2/git/statsv2-install.sh install COMMAND to INSTALL/UPDATE"
     
     echo $LINE_BREAK
     echo "FINISH UPDATE"
