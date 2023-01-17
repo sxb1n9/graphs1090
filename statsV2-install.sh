@@ -95,6 +95,8 @@ function MAIN()
 
         GIT_PULL $TARGET
 
+        INSTALL_STATSV2
+
         echo $LINE_DASH
         echo "GIT DIRECTORY UPDATED"
         echo "RUN sudo /usr/share/statsV2/git/statsv2-install.sh install COMMAND to INSTALL/UPDATE"
