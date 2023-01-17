@@ -46,7 +46,7 @@ SERVICE_CONF=/lib/systemd/system
 OS_PATH=/etc/os-release
 
 # DEPENDANCIES
-PACKAGES=("git" "wget" "rrdtool" "bash-builtins" "collectd-core")
+PACKAGESs="git rrdtool wget unzip bash-builtins collectd-core collectd"
 PACKAGE_COLLECTD="http://mirrors.kernel.org/ubuntu/pool/universe/c/collectd/collectd-core_5.12.0-11_amd64.deb"
 
 # OTHER

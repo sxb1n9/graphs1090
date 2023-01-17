@@ -96,62 +96,30 @@ function INSTALL_DEPENDANCIES()
     echo "UPDATE APT"
     APT_UPDATE
 
-   PACKAGESs="git rrdtool wget unzip bash-builtins collectd-core collectd python something"
-
-    for PKGs in $PACKAGESs; do
-        echo $PKGs
-    done
-
+    echo "CHECK PACKAGES $PACKAGES"
     MISSING=$(dpkg --get-selections $PACKAGESs 2>&1 | grep -v 'install$' | awk '{ print $6 }')
 
     for PKG in $MISSING; do
-        echo "INSTALL $PKG"
-        # APT_INSTALL $PKG
+        echo "$PKG not installed"
+        APT_INSTALL $PKG
     done
 
-    echo "exit"
-    exit 1
+    echo "CHECK OS RELEASE Jammy Jellyfish UPDATE collectd to collectd-core 5.12"
+    if grep -qs -e 'Jammy Jellyfish' $OS_PATH; then
+        apt purge -y collectd || true
+        apt purge -y collectd-core || true
+        wget -O /tmp/collectd-core.deb $PACKAGE_COLLECTD || true
+        dpkg -i /tmp/collectd-core.deb || true
+    fi
 
-    sudo apt-get install $MISSING
-
-    for PKG in ${PACKAGES[@]}; do
-        DPKG_GREP=$(dpkg-query -W --showformat='${Status}\n' ${PKG} | grep "install ok installed")
-        if [ $DPKG_GREP == "install ok installed" ]; then
-            echo "${PKG} is installed"
-        else
-            echo "${PKG} is not installed trying to install"
-            APT_INSTALL ${PKG}
-            DPKG_GREP=$(dpkg-query -W --showformat='${Status}\n' ${PKG} | grep "install ok installed")
-            if [ $DPKG_GREP == "install ok installed" ]; then
-                echo "${PKG} is installed"
-            else
-                if [[ ${PKG} = "collectd-core" ]]; then
-                    echo "CHECK OS RELEASE Jammy Jellyfish UPDATE collectd to collectd-core 5.12"
-                    if grep -qs -e 'Jammy Jellyfish' $OS_PATH; then
-                        apt purge -y collectd || true
-                        apt purge -y collectd-core || true
-                        wget -O /tmp/collectd-core.deb $PACKAGE_COLLECTD || true
-                        dpkg -i /tmp/collectd-core.deb || true
-                    fi
-
-                    echo "CHECK INSTALL collectd"
-                    if ! command -v collectd &>/dev/null; then
-                        echo "ERROR: couldn't install collectd.core, it's probably a ubuntu issue..."
-                        echo "try installing it manually then rerun this install script!"
-                        echo $LINE_BREAK
-                        echo "EXITING ..."
-                        exit 1
-                    fi
-                else
-                    echo "ERROR: ${PKG} is not installed exiting"
-                    echo "try installing it manually then rerun this install script!"
-                    echo $LINE_BREAK
-                    echo "EXITING ..."
-                    exit 1
-                fi
-            fi
-        fi
-    done
+    echo "CHECK INSTALL collectd"
+    if ! command -v collectd &>/dev/null; then
+        echo "ERROR: couldn't install collectd.core, it's probably a ubuntu issue..."
+        echo "try installing it manually then rerun this install script!"
+        echo $LINE_BREAK
+        echo "EXITING ..."
+        exit 1
+    fi
 
     echo "CHECK OS RELEASE stretch,jessis,buster for PYTHON INSTALL"
     if grep -qs -e 'stretch|jessie|buster' $OS_PATH; then
