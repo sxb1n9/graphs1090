@@ -21,25 +21,26 @@ def handle_config(root):
 
         if child.key == 'Instance':
             instance_name = child.values[0]
-            url = None
-            url_978 = None
+            instance_host = 'localhost'
+            url_dump1090 = None
+            url_dump978 = None
             for ch2 in child.children:
-                if ch2.key == 'URL':
+                if ch2.key == 'URL_DUMP1090':
                     url = ch2.values[0]
-                if ch2.key == 'URL_978':
+                if ch2.key == 'URL_DUMP978':
                     url_978 = ch2.values[0]
             if url:
                 collectd.register_read(callback=read_1090,
-                                       data=(instance_name, 'localhost', url),
-                                       name='dump1090.' + instance_name,
+                                       data=(instance_name, instance_host, url_dump1090),
+                                       name='statsV2-dump1090.' + instance_name,
                                        interval=60)
             else:
-                collectd.warning('No dump1090 URL defined in /etc/collectd/collectd.conf for ' + instance_name)
+                collectd.warning('No statsV2-dump1090 URL defined in /etc/collectd/collectd.conf for ' + instance_name)
 
             if url_978:
                 collectd.register_read(callback=read_978,
-                                       data=(instance_name, 'localhost', url_978),
-                                       name='dump978.' + instance_name,
+                                       data=(instance_name, instance_host, url_dump978),
+                                       name='statsV2-dump978.' + instance_name,
                                        interval=60)
             else:
                 collectd.warning('No skyview978 URL defined in /etc/collectd/collectd.conf for ' + instance_name)
@@ -48,7 +49,7 @@ def handle_config(root):
             collectd.warning('Ignored config entry: ' + child.key)
             return
 
-V=collectd.Values(host='', plugin='dump1090', time=0)
+V=collectd.Values(host='', plugin='statsV2-dump1090', time=0)
 
 def dispatch_df(data, stats, name):
     if not has_key(stats, name):
@@ -708,4 +709,4 @@ def perc(p, values):
         res = values[x]
     return res
 
-collectd.register_config(callback=handle_config, name='dump1090')
+collectd.register_config(callback=handle_config, name='statsV2-dump1090')

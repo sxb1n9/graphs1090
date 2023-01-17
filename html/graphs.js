@@ -5,7 +5,7 @@
 $timeFrame = '24h';
 
 // Set this to the hostname of the system which is running dump1090.
-$hostName = 'test';
+$hostName = 'localhost';
 
 // Set the page refresh interval in milliseconds.
 $refreshInterval = 60000
