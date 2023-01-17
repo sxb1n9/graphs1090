@@ -94,9 +94,12 @@ function INSTALL_DEPENDANCIES()
 
     hash -r
     echo "UPDATE APT"
+    echo $LINE_DASH
     APT_UPDATE
+    echo $LINE_DASH
 
     echo "CHECK PACKAGES $PACKAGES"
+    echo $LINE_DASH
     MISSING=$(dpkg --get-selections $PACKAGESs 2>&1 | grep -v 'install$' | awk '{ print $6 }')
 
     for PKG in $MISSING; do
@@ -104,6 +107,7 @@ function INSTALL_DEPENDANCIES()
         APT_INSTALL $PKG
     done
 
+    echo $LINE_DASH
     echo "CHECK OS RELEASE Jammy Jellyfish UPDATE collectd to collectd-core 5.12"
     if grep -qs -e 'Jammy Jellyfish' $OS_PATH; then
         apt purge -y collectd || true
@@ -112,6 +116,7 @@ function INSTALL_DEPENDANCIES()
         dpkg -i /tmp/collectd-core.deb || true
     fi
 
+    echo $LINE_DASH
     echo "CHECK INSTALL collectd"
     if ! command -v collectd &>/dev/null; then
         echo "ERROR: couldn't install collectd.core, it's probably a ubuntu issue..."
@@ -121,6 +126,7 @@ function INSTALL_DEPENDANCIES()
         exit 1
     fi
 
+    echo $LINE_DASH
     echo "CHECK OS RELEASE stretch,jessis,buster for PYTHON INSTALL"
     if grep -qs -e 'stretch|jessie|buster' $OS_PATH; then
         echo "OS is stretch, jessie, buster"
