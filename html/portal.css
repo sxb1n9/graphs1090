@@ -16,6 +16,10 @@ html, body {
     text-align: center;
 }
 
+.padding-header {
+  height: 15px;
+}
+
 .padding {
     height: 15px;
 }
