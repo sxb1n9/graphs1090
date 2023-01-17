@@ -13,17 +13,18 @@
 		<link rel="apple-touch-icon" href="apple-touch-icon.png">
 	</head>
 
-	<!-- TAB LINKS -->
-	<header class="tab">
-		<button class="tablinks" onclick="switchTab(event, 'PIAWARE', 'block')">PIAWARE</button>
-		<button class="tablinks" onclick="switchTab(event, 'PIAWARE_STATS', 'block')">PIAWARE_STATS</button>
-		<button class="tablinks" onclick="switchTab(event, 'SKYAWARE', 'block')">SKYAWARE</button>
-		<button class="tablinks" onclick="switchTab(event, 'SKYAWARE978', 'block')">SKYAWARE978</button>
-		<button class="tablinks" onclick="switchTab(event, 'GRAPHS1090', 'block')" id="defaultOpen">GRAPHS1090</button>
-		<button class="tablinks" onclick="switchTab(event, 'STATSV2', 'block')">STATSV2</button>
-	</header>
-
 	<body>
+
+		<!-- TAB LINKS -->
+		<div class="tab">
+			<button class="tablinks" onclick="switchTab(event, 'PIAWARE', 'block')">PIAWARE</button>
+			<button class="tablinks" onclick="switchTab(event, 'PIAWARE_STATS', 'block')">PIAWARE_STATS</button>
+			<button class="tablinks" onclick="switchTab(event, 'SKYAWARE', 'block')">SKYAWARE</button>
+			<button class="tablinks" onclick="switchTab(event, 'SKYAWARE978', 'block')">SKYAWARE978</button>
+			<button class="tablinks" onclick="switchTab(event, 'GRAPHS1090', 'flex')" id="defaultOpen">GRAPHS1090</button>
+			<button class="tablinks" onclick="switchTab(event, 'STATSV2', 'block')">STATSV2</button>
+		</div>
+
 
 		<!-- STATSV2 TAB CONTENT-->
 		<div id="STATSV2" class="tabcontent">
