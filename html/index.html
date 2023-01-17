@@ -18,6 +18,8 @@
 		<div class="tab">
 			
 			<button class="tablinks" onclick="switchTab(event, 'PIAWARE', 'block')">PIAWARE</button>
+			<button class="tablinks" onclick="switchTab(event, 'SKYAWARE', 'block')">SKYAWARE</button>
+			<button class="tablinks" onclick="switchTab(event, 'SKYAWARE978', 'block')">SKYAWARE978</button>
 			<button class="tablinks" onclick="switchTab(event, 'GRAPHS1090', 'block')" id="defaultOpen">GRAPHS1090</button>
 			<button class="tablinks" onclick="switchTab(event, 'STATSV2', 'block')">STATSV2</button>
 			
@@ -25,7 +27,7 @@
 
 		<!-- STATSV2 TAB CONTENT-->
 		<div id="STATSV2" class="tabcontent">
-			<h1>STATSV2</h1>
+			<h1>NEW TEST</h1>
 		</div>
 
 		<!-- PIAWARE TAB CONTENT-->
@@ -35,9 +37,22 @@
 			</div>
 		</div>
 
+		<!-- SKYAWARE TAB CONTENT-->
+		<div id="SKYAWARE" class="tabcontent">
+			<div id="tabcontent-iframe">
+				<iframe src="http://192.168.1.21/skyaware" title="SKYAWARE" frameborder="0" allowfullscreen="" width="100%" height="100%"></iframe>
+			</div>
+		</div>
+
+		<!-- SKYAWARE978 TAB CONTENT-->
+		<div id="SKYAWARE978" class="tabcontent">
+			<div id="tabcontent-iframe">
+				<iframe src="http://192.168.1.21/skyaware978" title="SKYAWARE978" frameborder="0" allowfullscreen="" width="100%" height="100%"></iframe>
+			</div>
+		</div>
+
 		<!-- GRAPHS1090 TAB CONTENT-->
 		<div id="GRAPHS1090" class="tabcontent">
-			<h1>GRAPHS1090</h1>
 			<div class="btn-group" role="group">
 				<button type="button" id="btn-2h" class="btn btn-default btn-sm active" onclick="switchView('2h')">2 hours</button>
 				<button type="button" id="btn-8h" class="btn btn-default btn-sm" onclick="switchView('8h')">8 hours</button>
