@@ -129,14 +129,20 @@ function UNINSTALL()
 { 
     cd $TARGET
 
-    echo "STOP COLLECTD"
-    systemctl stop collectd
+    echo "STOP STATSV2"
+    systemctl stop statsV2
 
     echo "DISABLE STATSV2"
     systemctl disable --now statsV2
 
-    echo "BACKUP DISABLED"
+    echo "STOP COLLECTD"
+    systemctl stop collectd
+
+    echo "BACKUP COLLECTD (DISBLED)"
     # /usr/share/statsV2/ARCHIVE/gunzip.sh /var/lib/collectd/rrd/localhost
+
+    echo "STOP LIGHTTPD"
+    systemctl stop lighttpd
 
     echo "REMOVE LIGHTTPD CONF"
     rm -f $LIGHTTPD_CONF_AVAILABLE/88-statsV2.conf
