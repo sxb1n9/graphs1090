@@ -206,6 +206,39 @@ function INSTALL_STATSV2()
     chmod u+x $STATSV2_USR/*.py
     chmod u+x $STATSV2_USR/*.db
     chmod u+x $STATSV2_USR/*.md
+    
+}
+
+# SETUP_STATSV2 ---------------------------------------------------------------
+# move configs and changes based on OS
+# -----------------------------------------------------------------------------
+function SETUP_STATSV2()
+{ 
+    echo $LINE_BREAK
+    echo "SETUP_STATSV2"
+    echo $LINE_BREAK
+
+    cd $TARGET
+
+    echo "CHECK OS RELEASE jessi"
+    if grep jessie $OS_PATH >/dev/null; then
+        echo "FOUND jessi"
+        echo "Some features are not available on jessie! modifying statsV2-graphs.sh"
+        sed -i -e 's/ADDNAN/+/' -e 's/TRENDNAN/TREND/' -e 's/MAXNAN/MAX/' -e 's/MINNAN/MIN/' $STATSV2_USR/statsV2-graphs.sh
+        sed -i -e '/axis-format/d' $STATSV2_USR/statsV2-graphs.sh
+    else
+        echo "NOT jessi no actions"
+    fi
+
+    echo "FIX readonly remount logic in fr24feed update script"
+    sed -i -e 's?$(mount | grep " on / " | grep rw)?{ mount | grep " on / " | grep rw; }?' $FR24FEED_UPDATER_PATH &>/dev/null || true
+
+    echo "INSTALL STATSV2 default conf to ETC folder"
+    cp -n statsV2.default $STATSV2_ETC
+    cp statsV2.default $STATSV2_USR/default-statsV2.conf
+
+    echo "INSTALL STATSV2 service conf"
+    cp statsV2.service $SERVICE_CONF/statsV2.service
 }
 
 # INSTALL_SYMLINKS ------------------------------------------------------------
@@ -340,6 +373,8 @@ elif [[ $1 == "install" ]]; then
     INSTALL_STATSV2
 
     INSTALL_SYMLINKS
+
+    SETUP_STATSV2
     
     echo $LINE_DOUBLE
     echo "FINISH INSTALL"
@@ -449,31 +484,7 @@ sed -ie '/<Plugin "interface">/{a\
     esac
 done
 
-# SETUP STATSV2 ===============================================================
 
-echo $LINE_BREAK
-echo "SETUP STATSV2"
-echo $LINE_BREAK
-
-echo "CHECK os release jessi"
-if grep jessie $OS_PATH >/dev/null
-then
-	echo "Some features are not available on jessie! modifying statsV2-graphs.sh"
-	sed -i -e 's/ADDNAN/+/' -e 's/TRENDNAN/TREND/' -e 's/MAXNAN/MAX/' -e 's/MINNAN/MIN/' $STATSV2_USR/statsV2-graphs.sh
-	sed -i -e '/axis-format/d' $STATSV2_USR/statsV2-graphs.sh
-fi
-
-echo "FIX readonly remount logic in fr24feed update script"
-sed -i -e 's?$(mount | grep " on / " | grep rw)?{ mount | grep " on / " | grep rw; }?' $FR24FEED_UPDATER_PATH &>/dev/null || true
-
-echo "INSTALL statsV2 default conf"
-cp -n statsV2.default $STATSV2_ETC
-cp statsV2.default $STATSV2_USR/default-statsV2.conf
-
-echo "INSTALL service default conf"
-cp statsV2.service $SERVICE_CONF/statsV2.service
-
-echo $LINE_BREAK
 
 # SETUP LIGHTTPD ==============================================================
 
