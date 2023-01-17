@@ -93,16 +93,12 @@ html, body {
   padding: 6px 12px;
   border: 1px solid #ccc;
   border-top: none;
-}
-
-.divIFrame {
   width: 100%;
   min-height: 543px;
-  display: table;
   height:100%;
 }
 
-#divIFrame-content {
+#tabcontent-iframe {
   height: 100%;
   display: table-cell;
 }
