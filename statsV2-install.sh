@@ -2,21 +2,18 @@
 
 # NOTES =======================================================================
 
-# Install / Uninstall / Update statsV2
+# INSTALL / UNINSTALL / UPDATE STATSV2
 
 # INSTALL
-# sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh)"
-
-# INSTALL MANUAL
 # sudo apt-get install -y --no-install-suggests --no-install-recommends git
 # sudo git clone --depth 1 --single-branch --branch "v2" "https://github.com/sxb1n9/graphs1090" "/usr/share/statsV2/git"
 # sudo /usr/share/statsV2/git/statsV2-install.sh install
 
+# UPDATE (NOT CURRENTLY COMPLETE run install)
+# sudo /usr/share/statsV2/statsV2-install.sh update
+
 # UNINSTALL 
 # sudo /usr/share/statsV2/statsV2-install.sh uninstall
-
-# UPDATE
-# 
 
 # ARGUMENTS ===================================================================
 
@@ -29,31 +26,34 @@
 
 source statsV2-shared.sh
 
-# FUNCTIONS ==================================================================
+# FUNCTIONS ===================================================================
 
-# aptUpdate
+# APT_UPDATE ------------------------------------------------------------------
 # run apt update and wait for finish (update_done=yes)
-function aptUpdate()
+# -----------------------------------------------------------------------------
+function APT_UPDATE()
 {
-    echo "aptUpdate $pacakge";
+    echo "RUN APT_UPDATE";
 
     if [[ $update_done != "yes" ]]; then
         apt update && update_done=yes || true
     fi
 }
 
-# aptInstall $package
+# APT_INSTALL $PKG ------------------------------------------------------------
 # run apt install for package
-function aptInstall()
+# -----------------------------------------------------------------------------
+function APT_INSTALL()
 {
     if [[ -z "$1" ]]; then
-        echo "aptInstall needs 1 arguments" 1>&2;
-        echo "aptInstall PACKAGE" 1>&2;
+        echo "APT_INSTALL needs 1 arguments" 1>&2;
+        echo "APT_INSTALL PACKAGE" 1>&2;
         return 0; 
     fi
 
     package="$1";
-    echo "aptInstall $pacakge";
+    echo "RUN APT_INSTALL $pacakge";
+    
     apt-get install -y --no-install-suggests --no-install-recommends $package
 
 	if ! command -v "$CMD" &>/dev/null; then
@@ -61,62 +61,281 @@ function aptInstall()
 	fi
 }
 
-# getGIT $REPO $BRANCH $TARGET(dir)
+# GIT_CLONE $REPO $BRANCH $TARGET(dir) ----------------------------------------
 # clones REPO BRANCH to TARGET directory and CD's to that directory
 # dependancy: git installed
-function getGIT()
+# -----------------------------------------------------------------------------
+function GIT_CLONE()
 { 
     if [[ -z "$1" ]] || [[ -z "$2" ]] || [[ -z "$3" ]]; then
-        echo "getGIT needs 3 arguments" 1>&2;
-        echo "getGIT REPO BRANCH TARGET(dir)" 1>&2;
+        echo "GIT_CLONE needs 3 arguments" 1>&2;
+        echo "GIT_CLONE REPO BRANCH TARGET(dir)" 1>&2;
         return 0; 
     fi
 
     REPO="$1";
     BRANCH="$2";
     TARGET="$3";
-    echo "getGIT $1 $2 $3";
+    echo "GIT_CLONE $1 $2 $3";
 
     git clone --depth 1 --single-branch --branch "$BRANCH" "$REPO" "$TARGET"
     cd $TARGET
 }
 
-# UNINSTALL ===================================================================
-
-if [[ "$1" == "uninstall" ]]; then
+# INSTALL_DEPENDANCIES --------------------------------------------------------
+# checks and installs dependancies
+# dependancy: $PACKAGES $COMMANDS
+# -----------------------------------------------------------------------------
+function INSTALL_DEPENDANCIES()
+{ 
     echo $LINE_BREAK
-    echo "START UNINSTALL STATSV2"
+    echo "INSTALL_DEPENDANCIES"
     echo $LINE_BREAK
 
+    hash -r
+    echo "UPDATE APT"
+    APT_UPDATE
+
+    for PKG in ${PACKAGES[@]}; do
+        if [ $(dpkg-query -W --showformat='${Status}\n' ${PKG} | grep "install ok installed") == "install ok installed" ]; then
+            echo "${PKG} is installed"
+        else
+            echo "${PKG} is not installed trying to install"
+            APT_INSTALL ${PKG}
+            if [ $(dpkg-query -W --showformat='${Status}\n' ${PKG} | grep "install ok installed") == "install ok installed" ]; then
+                echo "${PKG} is installed"
+            else
+                if [[ ${PKG} = "collectd-core" ]]; then
+                    echo "CHECK OS RELEASE Jammy Jellyfish UPDATE collectd to collectd-core 5.12"
+                    if grep -qs -e 'Jammy Jellyfish' $OS_PATH; then
+                        apt purge -y collectd || true
+                        apt purge -y collectd-core || true
+                        wget -O /tmp/collectd-core.deb $PACKAGE_COLLECTD || true
+                        dpkg -i /tmp/collectd-core.deb || true
+                    fi
+
+                    echo "CHECK INSTALL collectd"
+                    if ! command -v collectd &>/dev/null; then
+                        echo "ERROR: couldn't install collectd.core, it's probably a ubuntu issue..."
+                        echo "try installing it manually then rerun this install script!"
+                        echo $LINE_BREAK
+                        echo "EXITING ..."
+                        exit 1
+                    fi
+                else
+                    echo "ERROR: ${PKG} is not installed exiting"
+                    echo "try installing it manually then rerun this install script!"
+                    echo $LINE_BREAK
+                    echo "EXITING ..."
+                    exit 1
+                fi
+            fi
+        fi
+    done
+
+    echo "CHECK OS RELEASE stretch,jessis,buster for PYTHON INSTALL"
+    if grep -qs -e 'stretch|jessie|buster' $OS_PATH; then
+        echo "OS is stretch, jessie, buster"
+        echo "CHECK & INSTALL python 2.7"
+        if ! dpkg -s libpython2.7 2>/dev/null | grep 'Status.*installed' &>/dev/null; then
+            echo "PYTHON 2.7 is not installed, trying to install"
+            apt-get install --no-install-suggests --no-install-recommends -y 'libpython2.7' || true
+        fi
+    else
+        echo "OS is not stretch, jessie, buster"
+        echo "CHECK & INSTALL PYTHON 3.9 and PYTHON 3.10"
+        if ! dpkg -s libpython3.9 2>/dev/null | grep 'Status.*installed' &>/dev/null \
+            && ! dpkg -s libpython3.10 2>/dev/null | grep 'Status.*installed' &>/dev/null
+        then
+            echo "PYTHON 3.9 or 3.10 is not installed, trying to install"
+            apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.9' \
+            || apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.10'
+        fi
+    fi
+
+    hash -r
+}
+
+# INSTALL_STATSV2 -------------------------------------------------------------
+# Moves the files from the git directory to the run directory
+# -----------------------------------------------------------------------------
+function INSTALL_STATSV2()
+{ 
+    echo $LINE_BREAK
+    echo "INSTALL_STATSV2"
+    echo $LINE_BREAK
+
+    cd $TARGET
+
+    echo "MAKE directories"
+    mkdir -p $STATSV2_VAR/scatter
+
+    echo "INSTALL statsV2 default config for reset"
+    cp statsV2-default $STATSV2_USR
+
+    echo "INSTALL statsV2 documents"
+    cp LICENSE $STATSV2_USR
+    cp README.md $STATSV2_USR
+    cp README.JSON.md $STATSV2_USR
+    cp README.CONFIG.md $STATSV2_USR
+
+    echo "INSTALL statsV2 bash scripts"
+    cp statsV2-shared.sh $STATSV2_USR
+    cp statsV2-install.sh $STATSV2_USR
+
+    cp statsV2-run.sh $STATSV2_USR
+    cp statsV2-service.sh $STATSV2_USR
+
+    cp statsV2-graphs.sh $STATSV2_USR
+    cp statsV2-graphs-scatter.sh $STATSV2_USR
+
+    echo "INSTALL statsV2 python scripts"
+    cp statsV2-dump978.py $STATSV2_USR
+    cp statsV2-dump1090.py $STATSV2_USR
+    cp statsV2-system.py $STATSV2_USR
+
+    echo "INSTALL statsV2 collectd DB"
+    cp statsV2-collectd.db $STATSV2_USR
+
+    echo "INSTALL statsV2 html"
+    cp -r html $STATSV2_USR
+
+    echo "SET statsV2 permissions"
+    chmod u+x $STATSV2_USR/*.sh
+    chmod u+x $STATSV2_USR/*.py
+    chmod u+x $STATSV2_USR/*.db
+    chmod u+x $STATSV2_USR/*.md
+}
+
+# INSTALL_SYMLINKS ------------------------------------------------------------
+# Moves the files from the git directory to the run directory
+# -----------------------------------------------------------------------------
+function INSTALL_SYMLINKS()
+{ 
+    echo $LINE_BREAK
+    echo "INSTALL_SYMLINKS"
+    echo $LINE_BREAK
+
+    echo "SETUP SYMLINK 1090"
+    mkdir -p $SYM1090
+
+    if [ -f /run/dump1090-fa/stats.json ]; then
+        echo "select dump1090-fa"
+        ln -snf /run/dump1090-fa $SYM1090/data
+        sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
+    elif [ -f /run/readsb/stats.json ]; then
+        echo "select readsb"
+        ln -snf /run/readsb $SYM1090/data
+        sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
+    elif [ -f /run/adsbexchange-feed/stats.json ]; then
+        echo "select adsbexchange"
+        ln -snf /run/adsbexchange-feed $SYM1090/data
+        sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
+    elif [ -f /run/dump1090/stats.json ]; then
+        echo "select dump1090"
+        ln -snf /run/dump1090 $SYM1090/data
+        sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
+    elif [ -f /run/dump1090-mutability/stats.json ]; then
+        echo "select dump1090-mutability"
+        ln -snf /run/dump1090-mutability $SYM1090/data
+        sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
+    else
+        echo "Can't find any 1090 instances, please check you already have a version of dump1090 installed"
+    fi
+
+    echo $LINE_BREAK
+    echo "SETUP SYMLINK 978"
+    mkdir -p $SYM978
+
+    if [ -f /run/skyaware978/aircraft.json ]; then
+        echo "select skyaware978"
+        ln -snf /run/skyaware978 $SYM0978/data
+        sed -i -e 's?URL_DUMP978 .*?URL_DUMP978 "file:///usr/share/statsV2/978-symlink"?' /etc/collectd/collectd.conf
+    elif [ -f /run/adsbexchange-978/aircraft.json ]; then
+        echo "select adsbexchange-978"
+        ln -snf /run/adsbexchange-978 $SYM0978/data
+        sed -i -e 's?URL_DUMP978 .*?URL_DUMP978 "file:///usr/share/statsV2/978-symlink"?' /etc/collectd/collectd.conf
+    else
+        echo "Can't find any 978 instances, please check you already have a version of dump978 installed"
+    fi
+}
+
+# RUN_INSTALL =================================================================
+# =============================================================================
+function RUN_INSTALL()
+{ 
+    echo "UPDATE GIT - GIT PULL"
+    cd $TARGET
+    git pull
+
+    INSTALL_DEPENDANCIES
+
+    INSTALL_STATSV2
+
+    INSTALL_SYMLINKS
+}
+
+# RUN_UPDATE ==================================================================
+# =============================================================================
+function RUN_UPDATE()
+{ 
+    echo "UPDATE GIT - GIT PULL"
+    cd $TARGET
+    git pull
+
+    echo "NOT CURRENTLY ENABLED RUN install command"
+}
+
+# RUN_UNINSTALL ===============================================================
+# =============================================================================
+function RUN_UNINSTALL()
+{ 
+    cd $TARGET
+
+    echo "STOP COLLECTD"
     systemctl stop collectd
+
+    echo "DISABLE STATSV2"
     systemctl disable --now statsV2
 
+    echo "BACKUP DISABLED"
     # /usr/share/statsV2/ARCHIVE/gunzip.sh /var/lib/collectd/rrd/localhost
 
-    # rm -f /etc/systemd/system/collectd.service.d/malarky.conf
+    echo "REMOVE LIGHTTPD CONF"
     rm -f $LIGHTTPD_CONF_AVAILABLE/88-statsV2.conf
     rm -f $LIGHTTPD_CONF_ENABLED/88-statsV2.conf
+
+    echo "REMOVE COLLECTD.SERVICE"
     rm -f /etc/systemd/system/collectd.service
+    # rm -f /etc/systemd/system/collectd.service.d/malarky.conf
+    echo "RESTORE COLLECTD.CONF BACKUP"
     mv /etc/collectd/collectd.conf.statsV2 /etc/collectd/collectd.conf &>/dev/null
 
+    echo "DISABLE LIGHTY STATSV2"
     lighty-disable-mod statsV2 >/dev/null
-
     systemctl daemon-reload
+
+    echo "RESTART COLLECTD"
     systemctl restart collectd
-    rm -r $STATSV2_USR
 
-    rm -rd /usr/share/statsV2
+    echo "REMOVE STATSV2 FOLDER"
+    rm -rd $STATSV2_USR
+}
 
-    echo "FINISH UNINSTALL STATSV2"
-    echo $LINE_BREAK
+# MAIN ========================================================================
+# INSTALL | UPDATE | UNINSTALL
+# =============================================================================
+if [[ -z "$1" ]]; then
+    echo "statsV2-install.sh needs 1 argument"
+    echo "example: statsV2-install.sh install"
+    echo "example: statsV2-install.sh update"
+    echo "example: statsV2-install.sh uninstall"
     echo "EXITING ..."
     exit 1
-fi 
-
-# START =======================================================================
+fi
 
 echo $LINE_BREAK
-echo "START INSTALL STATSV2"
+echo "START STATSV2-INSTALL.sh $1"
 echo $LINE_BREAK
 
 echo "SET error logging"
@@ -124,154 +343,55 @@ set -e
 trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
 renice 10 $$
 
-aptUpdate
-aptInstall git
-getGit $REPO $BRANCH $STATSV2_USR/git
+if [[ -z "$1" ]]; then
+    echo "statsV2-install.sh needs 1 argument"
+    echo "example: statsV2-install.sh install"
+    echo "example: statsV2-install.sh update"
+    echo "example: statsV2-install.sh uninstall"
+elif [[ "$1" == "install" ]]; then
 
-echo "exiting"
-exit 1 
-
-# DEPENDANCIES ================================================================
-
-echo $LINE_BREAK
-echo "INSTALL dependancies"
-echo $LINE_BREAK
-
-echo "CHECK commands for packages"
-hash -r
-for CMD in $COMMANDS; do
-	if ! command -v "$CMD" &>/dev/null; then
-		NEED_INSTALL=1
-	fi
-done
-
-echo "CHECK sleep"
-if ! [[ -f $SLEEP_PATH ]]; then
-    NEED_INSTALL=1
-fi
-
-echo "INSTALL required packages: $PACKAGES"
-if [[ $NEED_INSTALL == "1" ]]; then
-	if ! apt-get install -y --no-install-suggests --no-install-recommends $PACKAGES; then
-        aptUpdate
-        if ! apt-get install -y --no-install-suggests --no-install-recommends $PACKAGES; then
-            for PACKAGE in $PACKAGES; do
-                apt-get install -y --no-install-suggests --no-install-recommends $PACKAGE || true
-            done
-
-            echo "CHECK jellyfish update collectd"
-            if grep -qs -e 'Jammy Jellyfish' $OS_PATH; then
-                apt purge -y collectd || true
-                apt purge -y collectd-core || true
-                wget -O /tmp/collectd-core.deb $PACKAGE_COLLECTD || true
-                dpkg -i /tmp/collectd-core.deb || true
-            fi
-
-            echo "CHECK collectd installed"
-            if ! command -v collectd &>/dev/null; then
-                echo "ERROR: couldn't install collectd, it's probably a ubuntu issue ... try installing it manually then rerun this install script!"
-                echo $LINE_BREAK
-                echo "EXITING ..."
-                exit 1
-            fi
-        fi
-    fi
-
-    hash -r
-
-    echo "CHECK commands for packages"
-    NEED_INSTALL=0
-    for CMD in $COMMANDS; do
-        if ! command -v "$CMD" &>/dev/null; then
-            NEED_INSTALL=1
-        fi
-    done
-
-    if [[ $NEED_INSTALL == 0 ]]; then
-		echo "Packages successfully installed!"
-	else
-		echo "ERROR : Failed to install required packages: $packages"
-        echo "try installing it manually then rerun this install script!"
-        echo $LINE_BREAK
-        echo "EXITING ..."
-        exit 1
-	fi
-fi
-
-echo "CHECK os release for python install"
-if grep -E 'stretch|jessie|buster' $OS_PATH -qs; then
-    echo "CHECK & INSTALL python 2.7"
-	if ! dpkg -s libpython2.7 2>/dev/null | grep 'Status.*installed' &>/dev/null; then
-        aptUpdate
-		apt-get install --no-install-suggests --no-install-recommends -y 'libpython2.7' || true
-	fi
-else
-    echo "CHECK & INSTALL python 3.9 and 3.10"
-    if ! dpkg -s libpython3.9 2>/dev/null | grep 'Status.*installed' &>/dev/null \
-        && ! dpkg -s libpython3.10 2>/dev/null | grep 'Status.*installed' &>/dev/null
-	then
-        aptUpdate
-		apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.9' \
-		|| apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.10'
-	fi
-fi
-
-hash -r
-
-# GIT CLONE ===================================================================
-
-echo $LINE_BREAK
-echo "CLONE git"
-echo $LINE_BREAK
-
-if getGIT "$REPO" "$BRANCH" "$STATSV2_USR/git" && cd "$STATSV2_USR/git"; then
-    echo "GIT cloned"
-else
-	echo "ERROR : unable to download files (Maybe try again?)"
     echo $LINE_BREAK
-    echo "EXITING ..."
-    exit 1
+    echo "START INSTALL"
+    echo $LINE_BREAK
+
+    RUN_INSTALL()
+    
+    echo $LINE_BREAK
+    echo "FINISH INSTALL"
+    echo $LINE_BREAK
+
+elif [[ "$1" == "update" ]]; then
+
+    echo $LINE_BREAK
+    echo "START UPDATE"
+    echo $LINE_BREAK
+
+    RUN_UPDATE()
+    
+    echo $LINE_BREAK
+    echo "FINISH UPDATE"
+    echo $LINE_BREAK
+
+elif [[ "$1" == "uninstall" ]]; then
+
+    echo $LINE_BREAK
+    echo "START UNINSTALL"
+    echo $LINE_BREAK
+
+    RUN_UNINSTALL()
+
+    echo $LINE_BREAK
+    echo "FINISH UNINSTALL"
+    echo $LINE_BREAK
+
+else
+
+    echo "ERROR: Unknown Argument: $1"
+
 fi
 
-# INSTALL STATSV2 GENERAL =====================================================
-
-echo $LINE_BREAK
-echo "INSTALL statsV2 files"
-echo $LINE_BREAK
-
-echo "MAKE directories"
-mkdir -p $STATSV2_VAR/scatter
-
-echo "INSTALL statsV2 default config for reset"
-cp statsV2-default.db $STATSV2_USR
-
-echo "INSTALL statsV2 documents"
-cp LICENSE $STATSV2_USR
-cp README.md $STATSV2_USR
-cp README.JSON.md $STATSV2_USR
-
-echo "INSTALL statsV2 bash scripts"
-cp statsV2-install.sh $STATSV2_USR
-
-cp statsV2-run.sh $STATSV2_USR
-cp statsV2-service.sh $STATSV2_USR
-
-cp statsV2-graphs.sh $STATSV2_USR
-cp statsV2-graphs-scatter.sh $STATSV2_USR
-
-echo "SET statsV2 permissions bash scripts"
-chmod u+x $STATSV2_USR/*.sh
-
-echo "INSTALL statsV2 python scripts"
-cp statsV2-dump978.py $STATSV2_USR
-cp statsV2-dump1090.py $STATSV2_USR
-cp statsV2-system.py $STATSV2_USR
-
-echo "INSTALL statsV2 collectd DB"
-cp statsV2-collectd.db $STATSV2_USR
-
-echo "INSTALL statsV2 html"
-cp -r html $STATSV2_USR
+echo "EXITING ..."
+exit 1
 
 # SETUP COLLECTD ==============================================================
 
@@ -337,55 +457,6 @@ sed -ie '/<Plugin "interface">/{a\
         ;;
     esac
 done
-
-# SETUP SYMLINKS COLLECTD =====================================================
-
-echo $LINE_BREAK
-echo "SETUP SYMLINKS collectd"
-echo $LINE_BREAK
-
-echo "SETUP SYMLINK 1090"
-mkdir -p $SYM1090
-
-if [ -f /run/dump1090-fa/stats.json ]; then
-    echo "select dump1090-fa"
-    ln -snf /run/dump1090-fa $SYM1090/data
-    sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
-elif [ -f /run/readsb/stats.json ]; then
-    echo "select readsb"
-    ln -snf /run/readsb $SYM1090/data
-    sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
-elif [ -f /run/adsbexchange-feed/stats.json ]; then
-    echo "select adsbexchange"
-    ln -snf /run/adsbexchange-feed $SYM1090/data
-    sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
-elif [ -f /run/dump1090/stats.json ]; then
-    echo "select dump1090"
-    ln -snf /run/dump1090 $SYM1090/data
-    sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
-elif [ -f /run/dump1090-mutability/stats.json ]; then
-    echo "select dump1090-mutability"
-    ln -snf /run/dump1090-mutability $SYM1090/data
-    sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
-else
-	echo "Can't find any 1090 instances, please check you already have a version of dump1090 installed"
-fi
-
-echo $LINE_BREAK
-echo "SETUP SYMLINK 978"
-mkdir -p $SYM978
-
-if [ -f /run/skyaware978/aircraft.json ]; then
-    echo "select skyaware978"
-    ln -snf /run/skyaware978 $SYM978/data
-    sed -i -e 's?URL_DUMP978 .*?URL_DUMP978 "file:///usr/share/statsV2/978-symlink"?' /etc/collectd/collectd.conf
-elif [ -f /run/adsbexchange-978/aircraft.json ]; then
-    echo "select adsbexchange-978"
-    ln -snf /run/adsbexchange-978 $SYM978/data
-    sed -i -e 's?URL_DUMP978 .*?URL_DUMP978 "file:///usr/share/statsV2/978-symlink"?' /etc/collectd/collectd.conf
-else
-	echo "Can't find any 978 instances, please check you already have a version of dump978 installed"
-fi
 
 # SETUP STATSV2 ===============================================================
 

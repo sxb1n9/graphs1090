@@ -56,18 +56,21 @@ COLLECTD FILES
 - statsV2-collectd.db
 
 # STATSV2 INSTALL:
+REQUIRES GIT 
 ```
-sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh install)"
+sudo apt-get install -y --no-install-suggests --no-install-recommends git
+sudo git clone --depth 1 --single-branch --branch "v2" "https://github.com/sxb1n9/graphs1090" "/usr/share/statsV2/git"
+sudo /usr/share/statsV2/git/statsV2-install.sh install
 ```
 
-# STATS32 UPDATE:
+# STATS32 UPDATE (NOT CURRENTLY COMPLETE run install):
 ```
-sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh update)"
+sudo /usr/share/statsV2/statsV2-install.sh update
 ```
 
 # STATSV2 UNINSTALL:
 ```
-sudo bash -c "$(curl -L -o - https://github.com/bing281/graphs1090/raw/v2/statsV2-install.sh uninstall)"
+sudo /usr/share/statsV2/statsV2-install.sh uninstall
 ```
 
 # STATSV2 CONFIGURE (optional):
