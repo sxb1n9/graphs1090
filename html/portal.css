@@ -94,11 +94,9 @@ html, body {
   border: 1px solid #ccc;
   border-top: none;
   width: 100%;
-  min-height: 543px;
-  height:100%;
 }
 
 #tabcontent-iframe {
   height: 100%;
-  display: table-cell;
+  width: 100%;
 }
