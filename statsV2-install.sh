@@ -134,7 +134,6 @@ function INSTALL_DEPENDANCIES()
         echo "OS is stretch, jessie, buster"
         echo $LINE_DASH
         echo "CHECK & INSTALL python 2.7"
-        echo $LINE_DASH
         if ! dpkg -s libpython2.7 2>/dev/null | grep 'Status.*installed' &>/dev/null; then
             echo "PYTHON 2.7 is not installed, trying to install"
             apt-get install --no-install-suggests --no-install-recommends -y 'libpython2.7' || true
