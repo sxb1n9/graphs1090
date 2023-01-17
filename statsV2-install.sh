@@ -96,6 +96,24 @@ function INSTALL_DEPENDANCIES()
     echo "UPDATE APT"
     APT_UPDATE
 
+   PACKAGESs="git rrdtool wget unzip bash-builtins collectd-core collectd"
+
+    for PKGs in $PACKAGESs; do
+        echo $PKGs
+    done
+
+    MISSING=$(dpkg --get-selections $PACKAGESs 2>&1 | grep -v 'install$' | awk '{ print $6 }')
+
+    for PKG in $MISSING; do
+        echo "INSTALL $PKG"
+        # APT_INSTALL $PKG
+    done
+
+    echo "exit"
+    exit 1
+
+    sudo apt-get install $MISSING
+
     for PKG in ${PACKAGES[@]}; do
         DPKG_GREP=$(dpkg-query -W --showformat='${Status}\n' ${PKG} | grep "install ok installed")
         if [ $DPKG_GREP == "install ok installed" ]; then
