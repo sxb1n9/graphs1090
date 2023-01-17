@@ -165,7 +165,7 @@ function CONTROL_SERVICE()
             echo $LINE_DASH
             echo "ERROR: $APP is not running displaying log below"
             echo $LINE_DASH
-            journalctl --no-pager -u collectd | tail -n40
+            journalctl --no-pager -u $APP | tail -n40
         fi
     fi
 }

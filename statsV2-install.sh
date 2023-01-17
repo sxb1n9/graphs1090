@@ -394,7 +394,7 @@ function SETUP_LIGHTTPD()
     if [ -d $LIGHTTPD_CONF_ENABLED ] && [ -d $LIGHTTPD_CONF_AVAILABLE ] && command -v lighttpd &>/dev/null; then
         echo "LIGHTTPD STATSV2 to available and set enabled"
         cp statsV2-lighttpd.conf $LIGHTTPD_CONF_AVAILABLE/88-statsV2.conf
-        ln -snf $STATSV2_USR/88-statsV2.conf $LIGHTTPD_CONF_ENABLED/88-statsV2.conf
+        ln -snf $LIGHTTPD_CONF_AVAILABLE/88-statsV2.conf $LIGHTTPD_CONF_ENABLED/88-statsV2.conf
     else
         echo "ERROR: LIGHTTPD enabled and available not setup correctly"
     fi
