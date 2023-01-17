@@ -33,7 +33,9 @@ source statsV2-shared.sh
 # -----------------------------------------------------------------------------
 function APT_UPDATE()
 {
+    echo $LINE_DASH
     echo "RUN APT_UPDATE";
+    echo $LINE_DASH
 
     if [[ $update_done != "yes" ]]; then
         apt update && update_done=yes || true
@@ -93,11 +95,9 @@ function INSTALL_DEPENDANCIES()
     echo $LINE_BREAK
 
     hash -r
-    echo "UPDATE APT"
-    echo $LINE_DASH
     APT_UPDATE
-    echo $LINE_DASH
 
+    echo $LINE_DASH
     echo "CHECK PACKAGES $PACKAGES"
     echo $LINE_DASH
     MISSING=$(dpkg --get-selections $PACKAGESs 2>&1 | grep -v 'install$' | awk '{ print $6 }')
@@ -109,6 +109,7 @@ function INSTALL_DEPENDANCIES()
 
     echo $LINE_DASH
     echo "CHECK OS RELEASE Jammy Jellyfish UPDATE collectd to collectd-core 5.12"
+    echo $LINE_DASH
     if grep -qs -e 'Jammy Jellyfish' $OS_PATH; then
         apt purge -y collectd || true
         apt purge -y collectd-core || true
@@ -118,6 +119,7 @@ function INSTALL_DEPENDANCIES()
 
     echo $LINE_DASH
     echo "CHECK INSTALL collectd"
+    echo $LINE_DASH
     if ! command -v collectd &>/dev/null; then
         echo "ERROR: couldn't install collectd.core, it's probably a ubuntu issue..."
         echo "try installing it manually then rerun this install script!"
@@ -128,16 +130,21 @@ function INSTALL_DEPENDANCIES()
 
     echo $LINE_DASH
     echo "CHECK OS RELEASE stretch,jessis,buster for PYTHON INSTALL"
-    if grep -qs -e 'stretch|jessie|buster' $OS_PATH; then
+    echo $LINE_DASH
+    if grep -qs -E 'stretch|jessie|buster' $OS_PATH; then
         echo "OS is stretch, jessie, buster"
+        echo $LINE_DASH
         echo "CHECK & INSTALL python 2.7"
+        echo $LINE_DASH
         if ! dpkg -s libpython2.7 2>/dev/null | grep 'Status.*installed' &>/dev/null; then
             echo "PYTHON 2.7 is not installed, trying to install"
             apt-get install --no-install-suggests --no-install-recommends -y 'libpython2.7' || true
         fi
     else
         echo "OS is not stretch, jessie, buster"
+        echo $LINE_DASH
         echo "CHECK & INSTALL PYTHON 3.9 and PYTHON 3.10"
+        echo $LINE_DASH
         if ! dpkg -s libpython3.9 2>/dev/null | grep 'Status.*installed' &>/dev/null \
             && ! dpkg -s libpython3.10 2>/dev/null | grep 'Status.*installed' &>/dev/null
         then
