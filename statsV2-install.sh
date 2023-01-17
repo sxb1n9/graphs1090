@@ -139,6 +139,8 @@ function INSTALL_DEPENDANCIES()
         if ! dpkg -s libpython2.7 2>/dev/null | grep 'Status.*installed' &>/dev/null; then
             echo "PYTHON 2.7 is not installed, trying to install"
             apt-get install --no-install-suggests --no-install-recommends -y 'libpython2.7' || true
+        else 
+            echo "PYTHON 2.7 installed no action"
         fi
     else
         echo "OS is not stretch, jessie, buster"
@@ -146,11 +148,12 @@ function INSTALL_DEPENDANCIES()
         echo "CHECK & INSTALL PYTHON 3.9 and PYTHON 3.10"
         echo $LINE_DASH
         if ! dpkg -s libpython3.9 2>/dev/null | grep 'Status.*installed' &>/dev/null \
-            && ! dpkg -s libpython3.10 2>/dev/null | grep 'Status.*installed' &>/dev/null
-        then
+        && ! dpkg -s libpython3.10 2>/dev/null | grep 'Status.*installed' &>/dev/null; then
             echo "PYTHON 3.9 or 3.10 is not installed, trying to install"
             apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.9' \
             || apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.10'
+        else
+            echo "PYTHON 3.9 or 3.10 installed no action"
         fi
     fi
 
