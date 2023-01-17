@@ -22,6 +22,9 @@
 # UPDATE    statsV2-install.sh update
 # UNINSTALL statsV2-install.sh uninstall
 
+# ARGUMENT $2 : blank | noupdate
+# noupdate  don't run apt update
+
 # IMPORTS =====================================================================
 
 source statsV2-shared.sh
@@ -486,4 +489,4 @@ function SETUP_COLLECTD()
 } 
 
 # CALL MAIN ===================================================================
-MAIN $1
+MAIN $1 $2
