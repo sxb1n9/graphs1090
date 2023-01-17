@@ -350,7 +350,11 @@ if [[ -z "$1" ]]; then
     echo "example: statsV2-install.sh update"
     echo "example: statsV2-install.sh uninstall"
 
-elif $1 == "install"; then
+else
+    ARG=$1
+fi 
+
+if [[ $ARG == "install" ]]; then
 
     echo $LINE_BREAK
     echo "START INSTALL"
@@ -362,7 +366,7 @@ elif $1 == "install"; then
     echo "FINISH INSTALL"
     echo $LINE_BREAK
 
-elif $1 == "update"; then
+elif [[ $ARG == "update" ]]; then
 
     echo $LINE_BREAK
     echo "START UPDATE"
@@ -374,7 +378,7 @@ elif $1 == "update"; then
     echo "FINISH UPDATE"
     echo $LINE_BREAK
 
-elif $1 == "uninstall"; then
+elif [[ $ARG == "uninstall" ]]; then
 
     echo $LINE_BREAK
     echo "START UNINSTALL"
