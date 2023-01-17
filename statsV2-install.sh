@@ -356,7 +356,7 @@ elif "$1" == "install"; then
     echo "START INSTALL"
     echo $LINE_BREAK
 
-    RUN_INSTALL()
+    RUN_INSTALL
     
     echo $LINE_BREAK
     echo "FINISH INSTALL"
@@ -368,7 +368,7 @@ elif "$1" == "update"; then
     echo "START UPDATE"
     echo $LINE_BREAK
 
-    RUN_UPDATE()
+    RUN_UPDATE
     
     echo $LINE_BREAK
     echo "FINISH UPDATE"
@@ -380,7 +380,7 @@ elif "$1" == "uninstall"; then
     echo "START UNINSTALL"
     echo $LINE_BREAK
 
-    RUN_UNINSTALL()
+    RUN_UNINSTALL
 
     echo $LINE_BREAK
     echo "FINISH UNINSTALL"
