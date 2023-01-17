@@ -10,6 +10,14 @@ Based on the work by https://github.com/wiedehopf/graphs1090
 - Simplify collections 1st pass
 - Update Install and Uninstall
 - Refactor Naming
+- install working up to lighttpd (not including statsV2 service and collectd)
+- web updated with tabs and multiple pages
+
+## NEXT STEPS
+- change name of repo to statsV2
+- make statsV2 service work
+- make collectd service work with statsV2
+
 
 ## PENDING UPDATES
 - Simplify Graphs for 1090 and 978 so that decisions can be made easier
@@ -17,6 +25,22 @@ Based on the work by https://github.com/wiedehopf/graphs1090
 - All page for total traffic stats like count of SW or AA or D planes 
 - All time best for distance / number of positions / number of aircraft ect.   
 - Trending Data
+- gain display in footer
+- planes display in footer
+- messages display in footer
+- configure IP address and iframe links
+- configure lat long
+- configure links
+        - adsbexchange
+        - radarbox 
+        - fr24
+        - forums
+        - git
+- configure tabs
+- populate help
+        - status commands 
+        - debug commands 
+        - log commands
 
 ## LOCATIONS
 - statsV2
