@@ -26,60 +26,137 @@
 
 source statsV2-shared.sh
 
-# FUNCTIONS ===================================================================
-
-# APT_UPDATE ------------------------------------------------------------------
-# run apt update and wait for finish (update_done=yes)
-# -----------------------------------------------------------------------------
-function APT_UPDATE()
-{
-    echo "RUN APT_UPDATE";
-
-    if [[ $update_done != "yes" ]]; then
-        apt update && update_done=yes || true
-    fi
-}
-
-# APT_INSTALL $PKG ------------------------------------------------------------
-# run apt install for package
-# -----------------------------------------------------------------------------
-function APT_INSTALL()
-{
-    if [[ -z "$1" ]]; then
-        echo "APT_INSTALL needs 1 arguments" 1>&2;
-        echo "APT_INSTALL PACKAGE" 1>&2;
-        return 0; 
-    fi
-
-    package="$1";
-    echo "RUN APT_INSTALL $pacakge";
-
-    apt-get install -y --no-install-suggests --no-install-recommends $package
-
-	if ! command -v "$CMD" &>/dev/null; then
-		NEED_INSTALL=1
-	fi
-}
-
-# GIT_CLONE $REPO $BRANCH $TARGET(dir) ----------------------------------------
-# clones REPO BRANCH to TARGET directory and CD's to that directory
-# dependancy: git installed
-# -----------------------------------------------------------------------------
-function GIT_CLONE()
+# MAIN $1 =====================================================================
+# $1 : install | update | uninstall
+# =============================================================================
+function MAIN()
 { 
-    if [[ -z "$1" ]] || [[ -z "$2" ]] || [[ -z "$3" ]]; then
-        echo "GIT_CLONE needs 3 arguments" 1>&2;
-        echo "GIT_CLONE REPO BRANCH TARGET(dir)" 1>&2;
-        return 0; 
+    if [[ -z "$1" ]]; then
+        echo "statsV2-install.sh needs 1 argument"
+        echo "example: statsV2-install.sh install"
+        echo "example: statsV2-install.sh update"
+        echo "example: statsV2-install.sh uninstall"
+        echo "EXITING ..."
+        exit 1
     fi
 
-    REPO="$1";
-    BRANCH="$2";
-    TARGET="$3";
-    echo "GIT_CLONE $1 $2 $3";
+    echo $LINE_HASH
+    echo "START STATSV2-INSTALL.sh $1"
+    echo $LINE_HASH
 
-    git clone --depth 1 --single-branch --branch "$BRANCH" "$REPO" "$TARGET"
+    echo "SET error logging"
+    set -e
+    trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
+    renice 10 $$
+
+    if [[ -z "$1" ]]; then
+
+        echo "statsV2-install.sh needs 1 argument"
+        echo "example: statsV2-install.sh install"
+        echo "example: statsV2-install.sh update"
+        echo "example: statsV2-install.sh uninstall"
+
+    elif [[ $1 == "install" ]]; then
+
+        echo $LINE_DOUBLE
+        echo "START INSTALL"
+        echo $LINE_DOUBLE
+
+        INSTALL_DEPENDANCIES
+
+        INSTALL_STATSV2
+
+        INSTALL_SYMLINKS
+
+        SETUP_STATSV2
+
+        SETUP_LIGHTTPD
+
+        # SETUP_COLLECTD
+
+        # CONTROL_SERVICE restart lighttpd enabled
+        # CONTROL_SERVICE restart collectd enabled
+        # CONTROL_SERVICE restart statsV2 enabled
+        
+        echo $LINE_DOUBLE
+        echo "FINISH INSTALL"
+        echo "Graphs available at http://$(ip route | grep -m1 -o -P 'src \K[0-9,.]*')/statsV2"
+        echo "It may take up to 10 minutes until the first data is displayed"
+        echo $LINE_DOUBLE
+
+    elif [[ $1 == "update" ]]; then
+
+        echo $LINE_DOUBLE
+        echo "START UPDATE"
+        echo $LINE_DOUBLE
+
+        GIT_PULL $TARGET
+
+        echo $LINE_DASH
+        echo "GIT DIRECTORY UPDATED"
+        echo "RUN sudo /usr/share/statsV2/git/statsv2-install.sh install COMMAND to INSTALL/UPDATE"
+        
+        echo $LINE_DOUBLE
+        echo "FINISH UPDATE"
+        echo $LINE_DOUBLE
+
+    elif [[ $1 == "uninstall" ]]; then
+
+        echo $LINE_DOUBLE
+        echo "START UNINSTALL"
+        echo $LINE_DOUBLE
+
+        UNINSTALL
+
+        echo $LINE_DOUBLE
+        echo "FINISH UNINSTALL"
+        echo $LINE_DOUBLE
+
+    else
+
+        echo "ERROR: Unknown Argument: $1"
+
+    fi
+
+    echo "EXITING ..."
+    exit 1
+}
+
+# UNINSTALL ===================================================================
+#
+# =============================================================================
+function UNINSTALL()
+{ 
     cd $TARGET
+
+    echo "STOP COLLECTD"
+    systemctl stop collectd
+
+    echo "DISABLE STATSV2"
+    systemctl disable --now statsV2
+
+    echo "BACKUP DISABLED"
+    # /usr/share/statsV2/ARCHIVE/gunzip.sh /var/lib/collectd/rrd/localhost
+
+    echo "REMOVE LIGHTTPD CONF"
+    rm -f $LIGHTTPD_CONF_AVAILABLE/88-statsV2.conf
+    rm -f $LIGHTTPD_CONF_ENABLED/88-statsV2.conf
+
+    echo "REMOVE COLLECTD.SERVICE"
+    rm -f /etc/systemd/system/collectd.service
+    # rm -f /etc/systemd/system/collectd.service.d/malarky.conf
+    echo "RESTORE COLLECTD.CONF BACKUP"
+    mv /etc/collectd/collectd.conf.statsV2 /etc/collectd/collectd.conf &>/dev/null
+
+    echo "DISABLE LIGHTY STATSV2"
+    lighty-disable-mod statsV2 >/dev/null
+    systemctl daemon-reload
+
+    echo "RESTART COLLECTD"
+    systemctl restart collectd
+
+    echo "REMOVE STATSV2 FOLDER"
+    rm -rd $STATSV2_USR
 }
 
 # INSTALL_DEPENDANCIES --------------------------------------------------------
@@ -294,181 +371,93 @@ function INSTALL_SYMLINKS()
     fi
 }
 
-# RUN_UNINSTALL ===============================================================
-# =============================================================================
-function RUN_UNINSTALL()
+# SETUP_LIGHTTPD --------------------------------------------------------------
+# setup available and enabled if needed
+# copy STATSV2 conf to available and set enabled
+# -----------------------------------------------------------------------------
+function SETUP_LIGHTTPD()
 { 
-    cd $TARGET
+    echo $LINE_BREAK
+    echo "SETUP_LIGHTTPD"
+    echo $LINE_BREAK
 
-    echo "STOP COLLECTD"
-    systemctl stop collectd
+    echo "SETUP LIGHTTPD conf-enabled and conf-available directories if conf.d is there"
+    if [ -d $LIGHTTPD_CONF/conf.d/ ] && ! [ -d $LIGHTTPD_CONF_ENABLED ] && ! [ -d $LIGHTTPD_CONF_AVAILABLE] && command -v lighttpd &>/dev/null; then
+        echo "LIGHTTPD enabled and available SETUP"
+        ln -snf $LIGHTTPD_CONF/conf.d $LIGHTTPD_CONF_ENABLED
+        mkdir -p $LIGHTTPD_CONF_AVAILABLE
+    else
+        echo "LIGHTTPD enabled and available already exist no actions"
+    fi
 
-    echo "DISABLE STATSV2"
-    systemctl disable --now statsV2
-
-    echo "BACKUP DISABLED"
-    # /usr/share/statsV2/ARCHIVE/gunzip.sh /var/lib/collectd/rrd/localhost
-
-    echo "REMOVE LIGHTTPD CONF"
-    rm -f $LIGHTTPD_CONF_AVAILABLE/88-statsV2.conf
-    rm -f $LIGHTTPD_CONF_ENABLED/88-statsV2.conf
-
-    echo "REMOVE COLLECTD.SERVICE"
-    rm -f /etc/systemd/system/collectd.service
-    # rm -f /etc/systemd/system/collectd.service.d/malarky.conf
-    echo "RESTORE COLLECTD.CONF BACKUP"
-    mv /etc/collectd/collectd.conf.statsV2 /etc/collectd/collectd.conf &>/dev/null
-
-    echo "DISABLE LIGHTY STATSV2"
-    lighty-disable-mod statsV2 >/dev/null
-    systemctl daemon-reload
-
-    echo "RESTART COLLECTD"
-    systemctl restart collectd
-
-    echo "REMOVE STATSV2 FOLDER"
-    rm -rd $STATSV2_USR
+    echo "SETUP LIGHTTPD STATSV2 conf to conf-available and conf-enabled"
+    if [ -d $LIGHTTPD_CONF_ENABLED ] && [ -d $LIGHTTPD_CONF_AVAILABLE ] && command -v lighttpd &>/dev/null; then
+        echo "LIGHTTPD STATSV2 to available and set enabled"
+        cp statsV2-lighttpd.conf $LIGHTTPD_CONF_AVAILABLE/88-statsV2.conf
+        ln -snf $STATSV2_USR/88-statsV2.conf $LIGHTTPD_CONF_ENABLED/88-statsV2.conf
+    else
+        echo "ERROR: LIGHTTPD enabled and available not setup correctly"
+    fi
 }
 
-# MAIN ========================================================================
-# INSTALL | UPDATE | UNINSTALL
-# =============================================================================
-if [[ -z "$1" ]]; then
-    echo "statsV2-install.sh needs 1 argument"
-    echo "example: statsV2-install.sh install"
-    echo "example: statsV2-install.sh update"
-    echo "example: statsV2-install.sh uninstall"
-    echo "EXITING ..."
-    exit 1
-fi
-
-echo $LINE_HASH
-echo "START STATSV2-INSTALL.sh $1"
-echo $LINE_HASH
-
-echo "SET error logging"
-set -e
-trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
-renice 10 $$
-
-if [[ -z "$1" ]]; then
-
-    echo "statsV2-install.sh needs 1 argument"
-    echo "example: statsV2-install.sh install"
-    echo "example: statsV2-install.sh update"
-    echo "example: statsV2-install.sh uninstall"
-
-elif [[ $1 == "install" ]]; then
-
-    echo $LINE_DOUBLE
-    echo "START INSTALL"
-    echo $LINE_DOUBLE
-
-    # echo "UPDATE GIT - GIT PULL"
-    # cd $TARGET
-    # git pull
-
-    INSTALL_DEPENDANCIES
-
-    INSTALL_STATSV2
-
-    INSTALL_SYMLINKS
-
-    SETUP_STATSV2
-    
-    echo $LINE_DOUBLE
-    echo "FINISH INSTALL"
-    echo "Graphs available at http://$(ip route | grep -m1 -o -P 'src \K[0-9,.]*')/statsV2"
-    echo "It may take up to 10 minutes until the first data is displayed"
-    echo $LINE_DOUBLE
-
-elif [[ $1 == "update" ]]; then
-
-    echo $LINE_DOUBLE
-    echo "START UPDATE"
-    echo $LINE_DOUBLE
-
-    echo "UPDATE GIT - GIT PULL"
-    cd $TARGET
-    git pull
-
-    echo $LINE_DASH
-    echo "GIT DIRECTORY UPDATED"
-    echo "RUN sudo /usr/share/statsV2/git/statsv2-install.sh install COMMAND to INSTALL/UPDATE"
-    
-    echo $LINE_DOUBLE
-    echo "FINISH UPDATE"
-    echo $LINE_DOUBLE
-
-elif [[ $1 == "uninstall" ]]; then
-
-    echo $LINE_DOUBLE
-    echo "START UNINSTALL"
-    echo $LINE_DOUBLE
-
-    RUN_UNINSTALL
-
-    echo $LINE_DOUBLE
-    echo "FINISH UNINSTALL"
-    echo $LINE_DOUBLE
-
-else
-
-    echo "ERROR: Unknown Argument: $1"
-
-fi
-
-echo "EXITING ..."
-exit 1
-
 # SETUP_COLLECTD --------------------------------------------------------------
-#
+# backup collectd
+# setup airspy if needed
 # -----------------------------------------------------------------------------
 function SETUP_COLLECTD()
 { 
     echo $LINE_BREAK
-    echo "SETUP collectd conf"
+    echo "SETUP_COLLECTD"
     echo $LINE_BREAK
 
-    echo "STOP collectd"
-    systemctl stop collectd &>/dev/null || true
+    echo "STOP COLLECTD"
+    CONTROL_SERVICE stop collectd
 
     echo "BACKUP /etc/collectd/collectd.conf to /etc/collectd/collectd.conf.statsV2"
     cp "$COLLECTD_ETC/collectd.conf" "$COLLECTD_ETC/collectd.conf.statsV2" &>/dev/null || true
 
+    echo $LINE_DASH
     echo "CHECK CPU AIRSPY exists in RUN copy and tune"
     if [[ -f "$COLLECTD_CPU_AIRSPY_PATH" ]]; then
+        echo "COPY CPU AIRSPY found in RRD to RUN, tune and COPY back"
         cp "$COLLECTD_CPU_AIRSPY_PATH" "$COLLECTD_RUN/dump1090_cpu-airspy.rrd"
         rrdtool tune --maximum value:U "$COLLECTD_RUN/dump1090_cpu-airspy.rrd"
-        cp -f "$COLLECTD_RUN/dump1090_cpu-airspy.rrd" "$CPU_AIR"
+        cp -f "$COLLECTD_RUN/dump1090_cpu-airspy.rrd" "$COLLECTD_CPU_AIRSPY_PATH"
+    else
+        echo "CPU AIRSPY DNE in RRD no actions"
     fi
 
     echo "CHECK CPU AIRSPY exists in RRD copy and tune"
     if [[ -f "$COLLECTD_RRD/localhost/dump1090-localhost/dump1090_cpu-airspy.rrd" ]]; then
+        echo "TUNE CPU AIRSPY found in RUN"
         rrdtool tune --maximum value:U "$COLLECTD_RRD/localhost/dump1090-localhost/dump1090_cpu-airspy.rrd"
+    else
+        echo "CPU AIRSPY DNE in RUN no actions"
     fi
 
+    echo $LINE_DASH
     echo "INSTALL collectd.conf"
+    echo "CHECK GRAPHS1090 installed"
     if grep -e 'system_stats' -qs /etc/collectd/collectd.conf &>/dev/null; then
-        echo "graphs1090 already installed"
-
+        echo "GRAPHS1090 installed"
+        echo "CHECK STATSV2 installed"
         if grep -e 'statsV2-system' -qs /etc/collectd/collectd.conf &>/dev/null; then
-            echo "statsV2 already installed - no update"
-            echo $LINE_BREAK
+            echo "STATSV2 installed - no update"
+            echo $LINE_DASH
         else
-            echo "statsV2 NOT installed - using collectd conf which includes graphs1090 so they can run in parrallel"
-            echo $LINE_BREAK
+            echo "STATSV2 NOT installed - using collectd conf which includes graphs1090 so they can run in parrallel"
+            echo $LINE_DASH
             cp statsV2-collectd-graphs1090.conf /etc/collectd/collectd.conf
         fi
     else
-        echo "graphs1090 NOT installed - using collectd conf for only statsV2"
-
+        echo "GRAPHS1090 NOT installed - using collectd conf for only statsV2"
+        echo "CHECK STATSV2 installed"
         if grep -e 'statsV2-system' -qs /etc/collectd/collectd.conf &>/dev/null; then
-            echo "statsV2 already installed - no update"
-            echo $LINE_BREAK
+            echo "STATSV2 installed - no update"
+            echo $LINE_DASH
         else
-            echo "statsV2 NOT installed - using collectd conf for only statsV2"
-            echo $LINE_BREAK
+            echo "STATSV2 NOT installed - using collectd conf for only statsV2"
+            echo $LINE_DASH
             cp statsV2-collectd.conf /etc/collectd/collectd.conf
         fi
     fi
@@ -477,11 +466,11 @@ function SETUP_COLLECTD()
     for path in /sys/class/net/*
     do
         iface=$(basename $path)
-        # no action on existing interfaces
         fgrep -q 'Interface "'$iface'"' /etc/collectd/collectd.conf && continue
-        # only add interface starting with et en and wl
+        # no action on existing interfaces only add interface starting with et en and wl
         case $iface in
             et*|en*|wl*)
+            echo "ADD $iface"
     sed -ie '/<Plugin "interface">/{a\
         Interface "'$iface'"
     }' /etc/collectd/collectd.conf
@@ -490,69 +479,5 @@ function SETUP_COLLECTD()
     done
 } 
 
-# SETUP_LIGHTTPD --------------------------------------------------------------
-#
-# -----------------------------------------------------------------------------
-function SETUP_LIGHTTPD()
-{ 
-    echo $LINE_BREAK
-    echo "SETUP_LIGHTTPD"
-    echo $LINE_BREAK
-
-    echo "INSTALL lighttpd make conf-enabled make conf-available"
-    if [ -d $LIGHTTPD_CONF/conf.d/ ] && ! [ -d $LIGHTTPD_CONF_ENABLED ] && ! [ -d $LIGHTTPD_CONF_AVAILABLE] && command -v lighttpd &>/dev/null; then
-        ln -snf /etc/lighttpd/conf.d $LIGHTTPD_CONF_ENABLED
-        mkdir -p $LIGHTTPD_CONF_AVAILABLE
-    fi
-
-    echo "INSTALL lighttpd conf-available configs"
-    if [ -d $LIGHTTPD_CONF_ENABLED ] && [ -d $LIGHTTPD_CONF_AVAILABLE ] && command -v lighttpd &>/dev/null; then
-        cp statsV2-lighttpd.conf $LIGHTTPD_CONF_AVAILABLE/88-statsV2.conf
-        ln -snf $STATSV2_USR/88-statsV2.conf $LIGHTTPD_CONF_ENABLED/88-statsV2.conf
-    fi
-}
-
-# START_ALL -------------------------------------------------------------------
-# lighttpd, collectd, statsV2
-# -----------------------------------------------------------------------------
-function START_ALL()
-{ 
-    echo $LINE_BREAK
-    echo "START_ALL"
-    echo $LINE_BREAK
-
-    echo "RESTART lighttpd"
-    systemctl enable lighttpd &>/dev/null
-    systemctl restart lighttpd
-
-    echo "START collectd"
-    systemctl enable collectd &>/dev/null
-    systemctl start collectd &>/dev/null || true
-
-    echo "CHECK collectd"
-    if ! systemctl status collectd &>/dev/null; then
-        echo "ERROR : collectd isn't working, trying to install various libpython versions to work around the issue."
-        aptUpdate
-        apt-get install --no-install-suggests --no-install-recommends -y 'libpython2.7' || true
-        apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.10' || \
-        apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.9' || \
-        apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.8' || \
-        apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.7' || true
-
-        echo "RESTART collectd"
-        systemctl restart collectd || true
-
-        if ! systemctl status collectd &>/dev/null; then
-            echo "INFO : Showing the log for collectd using this command: journalctl --no-pager -u collectd | tail -n40"
-            echo $LINE_BREAK
-            journalctl --no-pager -u collectd | tail -n40
-            echo $LINE_BREAK
-            echo "ERROR : collectd still isn't working, you can try and rerun the install script at some other time."
-            echo "or report this issue with the full 40 lines above."
-        fi
-    fi
-
-    echo "START statsV2"
-    systemctl enable statsV2
-    systemctl restart statsV2
-}
+# CALL MAIN ===================================================================
+MAIN $1
