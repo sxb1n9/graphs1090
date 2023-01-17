@@ -33,7 +33,6 @@ source statsV2-shared.sh
 # -----------------------------------------------------------------------------
 function APT_UPDATE()
 {
-    echo $LINE_DASH
     echo "RUN APT_UPDATE";
 
     if [[ $update_done != "yes" ]]; then
@@ -146,7 +145,6 @@ function INSTALL_DEPENDANCIES()
         echo "OS is not stretch, jessie, buster"
         echo $LINE_DASH
         echo "CHECK & INSTALL PYTHON 3.9 and PYTHON 3.10"
-        echo $LINE_DASH
         if ! dpkg -s libpython3.9 2>/dev/null | grep 'Status.*installed' &>/dev/null \
         && ! dpkg -s libpython3.10 2>/dev/null | grep 'Status.*installed' &>/dev/null; then
             echo "PYTHON 3.9 or 3.10 is not installed, trying to install"
@@ -354,11 +352,7 @@ if [[ -z "$1" ]]; then
     echo "example: statsV2-install.sh update"
     echo "example: statsV2-install.sh uninstall"
 
-else
-    ARG=$1
-fi 
-
-if [[ $ARG == "install" ]]; then
+elif [[ $1 == "install" ]]; then
 
     echo $LINE_BREAK
     echo "START INSTALL"
@@ -370,7 +364,7 @@ if [[ $ARG == "install" ]]; then
     echo "FINISH INSTALL"
     echo $LINE_BREAK
 
-elif [[ $ARG == "update" ]]; then
+elif [[ $1 == "update" ]]; then
 
     echo $LINE_BREAK
     echo "START UPDATE"
@@ -382,7 +376,7 @@ elif [[ $ARG == "update" ]]; then
     echo "FINISH UPDATE"
     echo $LINE_BREAK
 
-elif [[ $ARG == "uninstall" ]]; then
+elif [[ $1 == "uninstall" ]]; then
 
     echo $LINE_BREAK
     echo "START UNINSTALL"
