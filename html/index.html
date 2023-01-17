@@ -20,8 +20,9 @@
 			<button class="tablinks" onclick="switchTab(event, 'PIAWARE', 'block')">PIAWARE</button>
 			<button class="tablinks" onclick="switchTab(event, 'SKYAWARE', 'block')">SKYAWARE</button>
 			<button class="tablinks" onclick="switchTab(event, 'SKYAWARE978', 'block')">SKYAWARE978</button>
-			<button class="tablinks" onclick="switchTab(event, 'GRAPHS1090', 'block')" id="defaultOpen">GRAPHS1090</button>
-			<button class="tablinks" onclick="switchTab(event, 'STATSV2', 'block')">STATSV2</button>
+			<button class="tablinks" onclick="switchTab(event, 'TAR1090', 'block')">TAR1090</button>
+			<button class="tablinks" onclick="switchTab(event, 'GRAPHS1090', 'block')">GRAPHS1090</button>
+			<button class="tablinks" onclick="switchTab(event, 'STATSV2', 'block')" id="defaultOpen">STATSV2</button>
 			<button class="tablinks" onclick="switchTab(event, 'LINKS', 'block')">LINKS</button>
 			<button class="tablinks" onclick="switchTab(event, 'HELP', 'block')">HELP</button>
 		</div>
@@ -54,6 +55,20 @@
 			</div>
 		</div>
 
+		<!-- TAR1090 TAB CONTENT-->
+		<div id="TAR1090" class="tabcontent">
+			<div id="tabcontent-iframe">
+				<iframe src="http://192.168.1.21/tar1090" title="TAR1090" frameborder="0" allowfullscreen="" width="100%" height="100%"></iframe>
+			</div>
+		</div>
+
+		<!-- GRAPHS1090 TAB CONTENT-->
+		<div id="GRAPHS1090" class="tabcontent">
+			<div id="tabcontent-iframe">
+				<iframe src="http://192.168.1.21/graphs1090" title="GRAPHS1090" frameborder="0" allowfullscreen="" width="100%" height="100%"></iframe>
+			</div>
+		</div>
+
 		<!-- LINKS TAB CONTENT-->
 		<div id="LINKS" class="tabcontent">
 			<a href="https://flightaware.com/adsb/stats/user/b1n9#stats-117494">flightaware stats</a>
@@ -65,8 +80,8 @@
 			<a href="https://flightaware.com/adsb/stats/user/b1n9#stats-117494">flightaware stats</a>
 		</div>
 
-		<!-- GRAPHS1090 TAB CONTENT-->
-		<div id="GRAPHS1090" class="tabcontent">
+		<!-- STATSV2 TAB CONTENT-->
+		<div id="STATSV2" class="tabcontent">
 			<div class="padding"></div>
 			<div class="btn-group" role="group">
 				<button type="button" id="btn-2h" class="btn btn-default btn-sm active" onclick="switchView('2h')">2 hours</button>
