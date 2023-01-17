@@ -25,7 +25,7 @@ $(document).ready(function () {
     }, $refreshInterval);
 });
 
-function switchTab(evt, tabName) {
+function switchTab(evt, tabName, tabType) {
     // Declare all variables
     var i, tabcontent, tablinks;
 
@@ -42,7 +42,7 @@ function switchTab(evt, tabName) {
     }
 
     // Show the current tab, and add an "active" class to the button that opened the tab
-    document.getElementById(tabName).style.display = "flex";
+    document.getElementById(tabName).style.display = tabType;
     evt.currentTarget.className += " active";
 }
 
