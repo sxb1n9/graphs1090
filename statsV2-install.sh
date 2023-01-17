@@ -378,6 +378,8 @@ elif [[ $1 == "install" ]]; then
     
     echo $LINE_DOUBLE
     echo "FINISH INSTALL"
+    echo "Graphs available at http://$(ip route | grep -m1 -o -P 'src \K[0-9,.]*')/statsV2"
+    echo "It may take up to 10 minutes until the first data is displayed"
     echo $LINE_DOUBLE
 
 elif [[ $1 == "update" ]]; then
@@ -419,138 +421,138 @@ fi
 echo "EXITING ..."
 exit 1
 
-# SETUP COLLECTD ==============================================================
+# SETUP_COLLECTD --------------------------------------------------------------
+#
+# -----------------------------------------------------------------------------
+function SETUP_COLLECTD()
+{ 
+    echo $LINE_BREAK
+    echo "SETUP collectd conf"
+    echo $LINE_BREAK
 
-echo $LINE_BREAK
-echo "SETUP collectd conf"
-echo $LINE_BREAK
+    echo "STOP collectd"
+    systemctl stop collectd &>/dev/null || true
 
-echo "STOP collectd"
-systemctl stop collectd &>/dev/null || true
+    echo "BACKUP /etc/collectd/collectd.conf to /etc/collectd/collectd.conf.statsV2"
+    cp "$COLLECTD_ETC/collectd.conf" "$COLLECTD_ETC/collectd.conf.statsV2" &>/dev/null || true
 
-echo "BACKUP /etc/collectd/collectd.conf to /etc/collectd/collectd.conf.statsV2"
-cp "$COLLECTD_ETC/collectd.conf" "$COLLECTD_ETC/collectd.conf.statsV2" &>/dev/null || true
-
-echo "CHECK CPU AIRSPY exists in RUN copy and tune"
-if [[ -f "$COLLECTD_CPU_AIRSPY_PATH" ]]; then
-    cp "$COLLECTD_CPU_AIRSPY_PATH" "$COLLECTD_RUN/dump1090_cpu-airspy.rrd"
-    rrdtool tune --maximum value:U "$COLLECTD_RUN/dump1090_cpu-airspy.rrd"
-    cp -f "$COLLECTD_RUN/dump1090_cpu-airspy.rrd" "$CPU_AIR"
-fi
-
-echo "CHECK CPU AIRSPY exists in RRD copy and tune"
-if [[ -f "$COLLECTD_RRD/localhost/dump1090-localhost/dump1090_cpu-airspy.rrd" ]]; then
-    rrdtool tune --maximum value:U "$COLLECTD_RRD/localhost/dump1090-localhost/dump1090_cpu-airspy.rrd"
-fi
-
-echo "INSTALL collectd.conf"
-if grep -e 'system_stats' -qs /etc/collectd/collectd.conf &>/dev/null; then
-	echo "graphs1090 already installed"
-
-    if grep -e 'statsV2-system' -qs /etc/collectd/collectd.conf &>/dev/null; then
-        echo "statsV2 already installed - no update"
-        echo $LINE_BREAK
-    else
-        echo "statsV2 NOT installed - using collectd conf which includes graphs1090 so they can run in parrallel"
-        echo $LINE_BREAK
-        cp statsV2-collectd-graphs1090.conf /etc/collectd/collectd.conf
+    echo "CHECK CPU AIRSPY exists in RUN copy and tune"
+    if [[ -f "$COLLECTD_CPU_AIRSPY_PATH" ]]; then
+        cp "$COLLECTD_CPU_AIRSPY_PATH" "$COLLECTD_RUN/dump1090_cpu-airspy.rrd"
+        rrdtool tune --maximum value:U "$COLLECTD_RUN/dump1090_cpu-airspy.rrd"
+        cp -f "$COLLECTD_RUN/dump1090_cpu-airspy.rrd" "$CPU_AIR"
     fi
-else
-    echo "graphs1090 NOT installed - using collectd conf for only statsV2"
 
-    if grep -e 'statsV2-system' -qs /etc/collectd/collectd.conf &>/dev/null; then
-        echo "statsV2 already installed - no update"
-        echo $LINE_BREAK
-    else
-        echo "statsV2 NOT installed - using collectd conf for only statsV2"
-        echo $LINE_BREAK
-        cp statsV2-collectd.conf /etc/collectd/collectd.conf
+    echo "CHECK CPU AIRSPY exists in RRD copy and tune"
+    if [[ -f "$COLLECTD_RRD/localhost/dump1090-localhost/dump1090_cpu-airspy.rrd" ]]; then
+        rrdtool tune --maximum value:U "$COLLECTD_RRD/localhost/dump1090-localhost/dump1090_cpu-airspy.rrd"
     fi
-fi
 
-echo "CHECK & SET unlisted interfaces on collectd.conf"
-for path in /sys/class/net/*
-do
-    iface=$(basename $path)
-    # no action on existing interfaces
-    fgrep -q 'Interface "'$iface'"' /etc/collectd/collectd.conf && continue
-    # only add interface starting with et en and wl
-    case $iface in
-        et*|en*|wl*)
-sed -ie '/<Plugin "interface">/{a\
-    Interface "'$iface'"
-}' /etc/collectd/collectd.conf
-        ;;
-    esac
-done
+    echo "INSTALL collectd.conf"
+    if grep -e 'system_stats' -qs /etc/collectd/collectd.conf &>/dev/null; then
+        echo "graphs1090 already installed"
 
+        if grep -e 'statsV2-system' -qs /etc/collectd/collectd.conf &>/dev/null; then
+            echo "statsV2 already installed - no update"
+            echo $LINE_BREAK
+        else
+            echo "statsV2 NOT installed - using collectd conf which includes graphs1090 so they can run in parrallel"
+            echo $LINE_BREAK
+            cp statsV2-collectd-graphs1090.conf /etc/collectd/collectd.conf
+        fi
+    else
+        echo "graphs1090 NOT installed - using collectd conf for only statsV2"
 
+        if grep -e 'statsV2-system' -qs /etc/collectd/collectd.conf &>/dev/null; then
+            echo "statsV2 already installed - no update"
+            echo $LINE_BREAK
+        else
+            echo "statsV2 NOT installed - using collectd conf for only statsV2"
+            echo $LINE_BREAK
+            cp statsV2-collectd.conf /etc/collectd/collectd.conf
+        fi
+    fi
 
-# SETUP LIGHTTPD ==============================================================
+    echo "CHECK & SET unlisted interfaces on collectd.conf"
+    for path in /sys/class/net/*
+    do
+        iface=$(basename $path)
+        # no action on existing interfaces
+        fgrep -q 'Interface "'$iface'"' /etc/collectd/collectd.conf && continue
+        # only add interface starting with et en and wl
+        case $iface in
+            et*|en*|wl*)
+    sed -ie '/<Plugin "interface">/{a\
+        Interface "'$iface'"
+    }' /etc/collectd/collectd.conf
+            ;;
+        esac
+    done
+} 
 
-echo $LINE_BREAK
-echo "SETUP lighttpd"
-echo $LINE_BREAK
+# SETUP_LIGHTTPD --------------------------------------------------------------
+#
+# -----------------------------------------------------------------------------
+function SETUP_LIGHTTPD()
+{ 
+    echo $LINE_BREAK
+    echo "SETUP_LIGHTTPD"
+    echo $LINE_BREAK
 
-echo "INSTALL lighttpd make conf-enabled make conf-available"
-if [ -d $LIGHTTPD_CONF/conf.d/ ] && ! [ -d $LIGHTTPD_CONF_ENABLED ] && ! [ -d $LIGHTTPD_CONF_AVAILABLE] && command -v lighttpd &>/dev/null; then
-    ln -snf /etc/lighttpd/conf.d $LIGHTTPD_CONF_ENABLED
-    mkdir -p $LIGHTTPD_CONF_AVAILABLE
-fi
+    echo "INSTALL lighttpd make conf-enabled make conf-available"
+    if [ -d $LIGHTTPD_CONF/conf.d/ ] && ! [ -d $LIGHTTPD_CONF_ENABLED ] && ! [ -d $LIGHTTPD_CONF_AVAILABLE] && command -v lighttpd &>/dev/null; then
+        ln -snf /etc/lighttpd/conf.d $LIGHTTPD_CONF_ENABLED
+        mkdir -p $LIGHTTPD_CONF_AVAILABLE
+    fi
 
-echo "INSTALL lighttpd conf-available configs"
-if [ -d $LIGHTTPD_CONF_ENABLED ] && [ -d $LIGHTTPD_CONF_AVAILABLE ] && command -v lighttpd &>/dev/null; then
-    cp statsV2-lighttpd.conf $LIGHTTPD_CONF_AVAILABLE/88-statsV2.conf
-    ln -snf $STATSV2_USR/88-statsV2.conf $LIGHTTPD_CONF_ENABLED/88-statsV2.conf
-fi
+    echo "INSTALL lighttpd conf-available configs"
+    if [ -d $LIGHTTPD_CONF_ENABLED ] && [ -d $LIGHTTPD_CONF_AVAILABLE ] && command -v lighttpd &>/dev/null; then
+        cp statsV2-lighttpd.conf $LIGHTTPD_CONF_AVAILABLE/88-statsV2.conf
+        ln -snf $STATSV2_USR/88-statsV2.conf $LIGHTTPD_CONF_ENABLED/88-statsV2.conf
+    fi
+}
 
-# START =======================================================================
+# START_ALL -------------------------------------------------------------------
+# lighttpd, collectd, statsV2
+# -----------------------------------------------------------------------------
+function START_ALL()
+{ 
+    echo $LINE_BREAK
+    echo "START_ALL"
+    echo $LINE_BREAK
 
-echo $LINE_BREAK
-echo "START ALL"
-echo $LINE_BREAK
+    echo "RESTART lighttpd"
+    systemctl enable lighttpd &>/dev/null
+    systemctl restart lighttpd
 
-echo "RESTART lighttpd"
-systemctl enable lighttpd &>/dev/null
-systemctl restart lighttpd
+    echo "START collectd"
+    systemctl enable collectd &>/dev/null
+    systemctl start collectd &>/dev/null || true
 
-echo "START collectd"
-systemctl enable collectd &>/dev/null
-systemctl start collectd &>/dev/null || true
-
-echo "CHECK collectd"
-if ! systemctl status collectd &>/dev/null; then
-    echo "ERROR : collectd isn't working, trying to install various libpython versions to work around the issue."
-    aptUpdate
-    apt-get install --no-install-suggests --no-install-recommends -y 'libpython2.7' || true
-    apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.10' || \
-    apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.9' || \
-    apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.8' || \
-    apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.7' || true
-
-    echo "RESTART collectd"
-    systemctl restart collectd || true
-
+    echo "CHECK collectd"
     if ! systemctl status collectd &>/dev/null; then
-        echo "INFO : Showing the log for collectd using this command: journalctl --no-pager -u collectd | tail -n40"
-        echo $LINE_BREAK
-        journalctl --no-pager -u collectd | tail -n40
-        echo $LINE_BREAK
-        echo "ERROR : collectd still isn't working, you can try and rerun the install script at some other time."
-        echo "or report this issue with the full 40 lines above."
+        echo "ERROR : collectd isn't working, trying to install various libpython versions to work around the issue."
+        aptUpdate
+        apt-get install --no-install-suggests --no-install-recommends -y 'libpython2.7' || true
+        apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.10' || \
+        apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.9' || \
+        apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.8' || \
+        apt-get install --no-install-suggests --no-install-recommends -y 'libpython3.7' || true
+
+        echo "RESTART collectd"
+        systemctl restart collectd || true
+
+        if ! systemctl status collectd &>/dev/null; then
+            echo "INFO : Showing the log for collectd using this command: journalctl --no-pager -u collectd | tail -n40"
+            echo $LINE_BREAK
+            journalctl --no-pager -u collectd | tail -n40
+            echo $LINE_BREAK
+            echo "ERROR : collectd still isn't working, you can try and rerun the install script at some other time."
+            echo "or report this issue with the full 40 lines above."
+        fi
     fi
-fi
 
-echo "START statsV2"
-systemctl enable statsV2
-systemctl restart statsV2
-
-echo $LINE_BREAK
-echo $LINE_BREAK
-echo "FINISHED INSTALL statsV2"
-echo "Graphs available at http://$(ip route | grep -m1 -o -P 'src \K[0-9,.]*')/statsV2"
-echo "It may take up to 10 minutes until the first data is displayed"
-echo $LINE_BREAK
-echo $LINE_BREAK
-echo "EXITING ..."
-exit 1
+    echo "START statsV2"
+    systemctl enable statsV2
+    systemctl restart statsV2
+}
