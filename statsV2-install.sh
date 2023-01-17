@@ -35,7 +35,6 @@ function APT_UPDATE()
 {
     echo $LINE_DASH
     echo "RUN APT_UPDATE";
-    echo $LINE_DASH
 
     if [[ $update_done != "yes" ]]; then
         apt update && update_done=yes || true
@@ -99,7 +98,6 @@ function INSTALL_DEPENDANCIES()
 
     echo $LINE_DASH
     echo "CHECK PACKAGES $PACKAGES"
-    echo $LINE_DASH
     MISSING=$(dpkg --get-selections $PACKAGESs 2>&1 | grep -v 'install$' | awk '{ print $6 }')
 
     for PKG in $MISSING; do
@@ -109,28 +107,30 @@ function INSTALL_DEPENDANCIES()
 
     echo $LINE_DASH
     echo "CHECK OS RELEASE Jammy Jellyfish UPDATE collectd to collectd-core 5.12"
-    echo $LINE_DASH
     if grep -qs -e 'Jammy Jellyfish' $OS_PATH; then
+        echo "Jammy Jellyfish UPDATE to 5.12"
         apt purge -y collectd || true
         apt purge -y collectd-core || true
         wget -O /tmp/collectd-core.deb $PACKAGE_COLLECTD || true
         dpkg -i /tmp/collectd-core.deb || true
-    fi
 
-    echo $LINE_DASH
-    echo "CHECK INSTALL collectd"
-    echo $LINE_DASH
-    if ! command -v collectd &>/dev/null; then
-        echo "ERROR: couldn't install collectd.core, it's probably a ubuntu issue..."
-        echo "try installing it manually then rerun this install script!"
-        echo $LINE_BREAK
-        echo "EXITING ..."
-        exit 1
+        echo $LINE_DASH
+        echo "CHECK INSTALL collectd"
+        if ! command -v collectd &>/dev/null; then
+            echo "ERROR: couldn't install collectd.core, it's probably a ubuntu issue..."
+            echo "try installing it manually then rerun this install script!"
+            echo $LINE_BREAK
+            echo "EXITING ..."
+            exit 1
+        else
+            echo "collectd installed"
+        fi
+    else
+        echo "NOT Jammy Jellyfish no action"
     fi
 
     echo $LINE_DASH
     echo "CHECK OS RELEASE stretch,jessis,buster for PYTHON INSTALL"
-    echo $LINE_DASH
     if grep -qs -E 'stretch|jessie|buster' $OS_PATH; then
         echo "OS is stretch, jessie, buster"
         echo $LINE_DASH
