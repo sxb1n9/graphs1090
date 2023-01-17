@@ -175,7 +175,7 @@ function INSTALL_STATSV2()
     mkdir -p $STATSV2_VAR/scatter
 
     echo "INSTALL statsV2 default config for reset"
-    cp statsV2-default $STATSV2_USR
+    cp statsV2.default $STATSV2_USR
 
     echo "INSTALL statsV2 documents"
     cp LICENSE $STATSV2_USR
