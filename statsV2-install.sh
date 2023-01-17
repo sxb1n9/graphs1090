@@ -168,7 +168,7 @@ function INSTALL_STATSV2()
 
     cd $TARGET
 
-    echo "INSALL STATSV2 directories"
+    echo "INSTALL STATSV2 directories"
     mkdir -p $STATSV2_VAR/scatter
 
     echo "INSTALL STATSV2 default config for reset"
