@@ -246,7 +246,7 @@ function INSTALL_SYMLINKS()
 
     echo $LINE_BREAK
     echo "SETUP SYMLINK 978"
-    mkdir -p $SYM978
+    mkdir -p $SYM0978
 
     if [ -f /run/skyaware978/aircraft.json ]; then
         echo "select skyaware978"
