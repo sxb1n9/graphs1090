@@ -96,7 +96,7 @@ function INSTALL_DEPENDANCIES()
     echo "UPDATE APT"
     APT_UPDATE
 
-   PACKAGESs="git rrdtool wget unzip bash-builtins collectd-core collectd python"
+   PACKAGESs="git rrdtool wget unzip bash-builtins collectd-core collectd python something"
 
     for PKGs in $PACKAGESs; do
         echo $PKGs
