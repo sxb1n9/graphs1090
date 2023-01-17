@@ -327,9 +327,9 @@ if [[ -z "$1" ]]; then
 
 elif [[ $1 == "install" ]]; then
 
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
     echo "START INSTALL"
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
 
     # echo "UPDATE GIT - GIT PULL"
     # cd $TARGET
@@ -341,40 +341,39 @@ elif [[ $1 == "install" ]]; then
 
     INSTALL_SYMLINKS
     
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
     echo "FINISH INSTALL"
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
 
 elif [[ $1 == "update" ]]; then
 
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
     echo "START UPDATE"
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
 
     echo "UPDATE GIT - GIT PULL"
     cd $TARGET
     git pull
 
-    echo $LINE_DOUBLE
+    echo $LINE_DASH
     echo "GIT DIRECTORY UPDATED"
     echo "RUN sudo /usr/share/statsV2/git/statsv2-install.sh install COMMAND to INSTALL/UPDATE"
-    echo $LINE_DOUBLE
     
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
     echo "FINISH UPDATE"
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
 
 elif [[ $1 == "uninstall" ]]; then
 
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
     echo "START UNINSTALL"
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
 
     RUN_UNINSTALL
 
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
     echo "FINISH UNINSTALL"
-    echo $LINE_STAR
+    echo $LINE_DOUBLE
 
 else
 
