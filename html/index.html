@@ -16,26 +16,27 @@
 	<body>
 		<!-- TAB LINKS -->
 		<div class="tab">
-			<button class="tablinks" onclick="switchTab(event, 'STATSV2')">STATSV2</button>
+			
 			<button class="tablinks" onclick="switchTab(event, 'PIAWARE')">PIAWARE</button>
 			<button class="tablinks" onclick="switchTab(event, 'GRAPHS1090')" id="defaultOpen">GRAPHS1090</button>
+			<button class="tablinks" onclick="switchTab(event, 'STATSV2')">STATSV2</button>
 			
 		</div>
 
 		<!-- STATSV2 TAB CONTENT-->
 		<div id="STATSV2" class="tabcontent">
-			<h1>STATSV2 Graphs</h1>
+			<h1>STATSV2</h1>
 		</div>
 
 		<!-- PIAWARE TAB CONTENT-->
 		<div id="PIAWARE" class="tabcontent">
 			<h1>PIAWARE</h1>
-			<iframe src="192.168.1.21" title="PIAWARE"></iframe>
+			<iframe src="http://192.168.1.21" title="PIAWARE"></iframe>
 		</div>
 
 		<!-- GRAPHS1090 TAB CONTENT-->
 		<div id="GRAPHS1090" class="tabcontent">
-			<h1>GRAPHS1090 Graphs</h1>
+			<h1>GRAPHS1090</h1>
 			<div class="btn-group" role="group">
 				<button type="button" id="btn-2h" class="btn btn-default btn-sm active" onclick="switchView('2h')">2 hours</button>
 				<button type="button" id="btn-8h" class="btn btn-default btn-sm" onclick="switchView('8h')">8 hours</button>
