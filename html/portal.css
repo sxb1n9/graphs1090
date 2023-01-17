@@ -94,3 +94,15 @@ html, body {
   border: 1px solid #ccc;
   border-top: none;
 }
+
+.divIFrame {
+  width: 100%;
+  min-height: 543px;
+  display: table;
+  height:100%;
+}
+
+#divIFrame-content {
+  height: 100%;
+  display: table-cell;
+}
