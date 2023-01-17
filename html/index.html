@@ -3,7 +3,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>statsV2: Performance Graphs</title>
+		<title>statsV2: ADSB HUB & GRAPHS</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" href="bootstrap.custom.light.css">
 		<link rel="stylesheet" href="portal.css">
@@ -18,6 +18,7 @@
 		<div class="tab">
 			
 			<button class="tablinks" onclick="switchTab(event, 'PIAWARE', 'block')">PIAWARE</button>
+			<button class="tablinks" onclick="switchTab(event, 'PIAWARE_STATS', 'block')">PIAWARE_STATS</button>
 			<button class="tablinks" onclick="switchTab(event, 'SKYAWARE', 'block')">SKYAWARE</button>
 			<button class="tablinks" onclick="switchTab(event, 'SKYAWARE978', 'block')">SKYAWARE978</button>
 			<button class="tablinks" onclick="switchTab(event, 'GRAPHS1090', 'block')" id="defaultOpen">GRAPHS1090</button>
@@ -37,6 +38,13 @@
 			</div>
 		</div>
 
+		<!-- PIAWARE_STATS TAB CONTENT-->
+		<div id="PIAWARE_STATS" class="tabcontent">
+			<div id="tabcontent-iframe">
+				<iframe src="https://flightaware.com/adsb/stats/user/b1n9#stats-117494" title="PIAWARE_STATS" frameborder="0" allowfullscreen="" width="100%" height="100%"></iframe>
+			</div>
+		</div>
+
 		<!-- SKYAWARE TAB CONTENT-->
 		<div id="SKYAWARE" class="tabcontent">
 			<div id="tabcontent-iframe">
@@ -53,6 +61,7 @@
 
 		<!-- GRAPHS1090 TAB CONTENT-->
 		<div id="GRAPHS1090" class="tabcontent">
+			<div class="padding"></div>
 			<div class="btn-group" role="group">
 				<button type="button" id="btn-2h" class="btn btn-default btn-sm active" onclick="switchView('2h')">2 hours</button>
 				<button type="button" id="btn-8h" class="btn btn-default btn-sm" onclick="switchView('8h')">8 hours</button>
@@ -257,28 +266,31 @@
 				</div>
 			</div>
 		</div>
+		<!-- END GRAPHS1090 TAB CONTENT-->
 
-		<div id="push">
+		<!-- PUSH -->
+		<div id="push"></div>
 
-		</div>
-
+		<!-- FOOTER -->
 		<footer id="footer">
-			<div class="container">
+			<div class="tab">
 				<p class="muted credits">
 					<a href="https://github.com/sxb1n9/graphs1090">statsV2 on github</a>
 				</p>
 			</div>
 		</footer>
 
+		<!-- SCRIPTS -->
 		<script src="jquery-3.1.1.min.js"></script>
 		<script src="bootstrap.min.js"></script>
 
+		<!-- GRAPH SCRIPTS -->
 		<script type="text/javascript">
 			$('#graphs-link').addClass("active");
 		</script>
-
 		<script src="graphs.js"></script>
 
+		<!-- TAB SCRIPTS -->
 		<script>
 			document.getElementById("defaultOpen").click();							// Get the element with id="defaultOpen" and click on it
 		</script>

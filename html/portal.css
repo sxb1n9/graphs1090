@@ -2,26 +2,28 @@ html, body {
     height: 100%;
     width: 100%;
 }
+
 #footer {
     height: 60px;
 }
-#push {
-    height: 10px;
-}
+
 #wrapper {
     min-height: 100%;
     height: auto !important;
     height: 100%;
     margin: 0 auto -60px;
 }
+
 .credits {
     margin: 20px 0;
 }
+
 .padding {
     height: 15px;
 }
+
 .row {
-  display: flex; // all_large2
+  display: flex; /* all_large2 */
   flex-wrap: wrap;
   padding: 0 0px;
   margin-right: 0px;
@@ -31,8 +33,9 @@ html, body {
 .panel-body {
   padding: 10px 10px;
 }
+
 .column {
-  flex: 50%; // all_large
+  flex: 50%; /* all_large */
   max-width: 100%;
   padding: 10px 10px;
 }
@@ -44,13 +47,12 @@ html, body {
   margin-right: auto;
 }
 
- .container {
+.container {
   padding-top: 60px;
   width: max-content;
   max-width: 100%;
   padding: 8px 8px;
 }
-
 
 @media screen and (max-width: 1000px) {
   .column {
@@ -97,6 +99,7 @@ html, body {
   height: 100%;
 }
 
+/* Style the iframe to flex to fit */
 #tabcontent-iframe {
   display: flex;
   height: 100%;
