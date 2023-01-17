@@ -168,19 +168,19 @@ function INSTALL_STATSV2()
 
     cd $TARGET
 
-    echo "MAKE directories"
+    echo "INSALL STATSV2 directories"
     mkdir -p $STATSV2_VAR/scatter
 
-    echo "INSTALL statsV2 default config for reset"
+    echo "INSTALL STATSV2 default config for reset"
     cp statsV2.default $STATSV2_USR
 
-    echo "INSTALL statsV2 documents"
+    echo "INSTALL STATSV2 documents"
     cp LICENSE $STATSV2_USR
     cp README.md $STATSV2_USR
     cp README.JSON.md $STATSV2_USR
     cp README.CONFIG.md $STATSV2_USR
 
-    echo "INSTALL statsV2 bash scripts"
+    echo "INSTALL STATSV2 bash scripts"
     cp statsV2-shared.sh $STATSV2_USR
     cp statsV2-install.sh $STATSV2_USR
 
@@ -190,18 +190,18 @@ function INSTALL_STATSV2()
     cp statsV2-graphs.sh $STATSV2_USR
     cp statsV2-graphs-scatter.sh $STATSV2_USR
 
-    echo "INSTALL statsV2 python scripts"
+    echo "INSTALL STATSV2 python scripts"
     cp statsV2-dump978.py $STATSV2_USR
     cp statsV2-dump1090.py $STATSV2_USR
     cp statsV2-system.py $STATSV2_USR
 
-    echo "INSTALL statsV2 collectd DB"
+    echo "INSTALL STATSV2 collectd DB"
     cp statsV2-collectd.db $STATSV2_USR
 
-    echo "INSTALL statsV2 html"
+    echo "INSTALL STATSV2 html"
     cp -r html $STATSV2_USR
 
-    echo "SET statsV2 permissions"
+    echo "SET STATSV2 permissions on files"
     chmod u+x $STATSV2_USR/*.sh
     chmod u+x $STATSV2_USR/*.py
     chmod u+x $STATSV2_USR/*.db
@@ -221,43 +221,43 @@ function INSTALL_SYMLINKS()
     mkdir -p $SYM1090
 
     if [ -f /run/dump1090-fa/stats.json ]; then
-        echo "select dump1090-fa"
+        echo "INSTALL SYMLINK 1090 for dump1090-fa"
         ln -snf /run/dump1090-fa $SYM1090/data
         sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
     elif [ -f /run/readsb/stats.json ]; then
-        echo "select readsb"
+        echo "INSTALL SYMLINK 1090 for readsb"
         ln -snf /run/readsb $SYM1090/data
         sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
     elif [ -f /run/adsbexchange-feed/stats.json ]; then
-        echo "select adsbexchange"
+        echo "INSTALL SYMLINK 1090 for adsbexchange"
         ln -snf /run/adsbexchange-feed $SYM1090/data
         sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
     elif [ -f /run/dump1090/stats.json ]; then
-        echo "select dump1090"
+        echo "INSTALL SYMLINK 1090 for dump1090"
         ln -snf /run/dump1090 $SYM1090/data
         sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
     elif [ -f /run/dump1090-mutability/stats.json ]; then
-        echo "select dump1090-mutability"
+        echo "INSTALL SYMLINK 1090 for dump1090-mutability"
         ln -snf /run/dump1090-mutability $SYM1090/data
         sed -i -e 's?URL_DUMP1090 .*?URL_DUMP1090 "file:///usr/share/statsV2/data-symlink"?' /etc/collectd/collectd.conf
     else
-        echo "Can't find any 1090 instances, please check you already have a version of dump1090 installed"
+        echo "ERROR: Can't find any 1090 instances, please check you already have a version of dump1090 installed"
     fi
 
-    echo $LINE_BREAK
+    echo $LINE_DASH
     echo "SETUP SYMLINK 978"
     mkdir -p $SYM0978
 
     if [ -f /run/skyaware978/aircraft.json ]; then
-        echo "select skyaware978"
+        echo "INSTALL SYMLINK 978 for skyaware978"
         ln -snf /run/skyaware978 $SYM0978/data
         sed -i -e 's?URL_DUMP978 .*?URL_DUMP978 "file:///usr/share/statsV2/978-symlink"?' /etc/collectd/collectd.conf
     elif [ -f /run/adsbexchange-978/aircraft.json ]; then
-        echo "select adsbexchange-978"
+        echo "INSTALL SYMLINK 978 for adsbexchange-978"
         ln -snf /run/adsbexchange-978 $SYM0978/data
         sed -i -e 's?URL_DUMP978 .*?URL_DUMP978 "file:///usr/share/statsV2/978-symlink"?' /etc/collectd/collectd.conf
     else
-        echo "Can't find any 978 instances, please check you already have a version of dump978 installed"
+        echo "ERROR: Can't find any 978 instances, please check you already have a version of dump978 installed"
     fi
 }
 
@@ -265,9 +265,9 @@ function INSTALL_SYMLINKS()
 # =============================================================================
 function RUN_INSTALL()
 { 
-    echo "UPDATE GIT - GIT PULL"
-    cd $TARGET
-    git pull
+    # echo "UPDATE GIT - GIT PULL"
+    # cd $TARGET
+    # git pull
 
     INSTALL_DEPENDANCIES
 
@@ -284,7 +284,8 @@ function RUN_UPDATE()
     cd $TARGET
     git pull
 
-    echo "NOT CURRENTLY ENABLED RUN install command"
+    echo "GIT DIRECTORY UPDATED"
+    echo "RUN sudo /usr/share/statsV2/git/statsv2-install.sh install COMMAND to INSTALL/UPDATE"
 }
 
 # RUN_UNINSTALL ===============================================================
