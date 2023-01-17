@@ -151,7 +151,7 @@ function CONTROL_SERVICE()
     APP=$2
 
     echo $LINE_BREAK
-    if [[ -z "$3" ]] then
+    if [[ -z "$3" ]]; then
         echo "ENABLE $APP"
         systemctl enable $APP &>/dev/null
     fi
