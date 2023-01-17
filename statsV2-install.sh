@@ -97,8 +97,8 @@ function INSTALL_DEPENDANCIES()
     APT_UPDATE
 
     for PKG in ${PACKAGES[@]}; do
-        if [ $(dpkg-query -W --showformat='${Status}\n' ${PKG} | grep "install ok installed") == "install ok installed" ]; then
-            echo "${PKG} is installed"
+        if [ dpkg-query -W --showformat='${Status}\n' ${PKG} | grep "install ok installed" == "install ok installed" ]; then
+            echo "${PKG} is installed 1"
         else
             echo "${PKG} is not installed trying to install"
             APT_INSTALL ${PKG}
