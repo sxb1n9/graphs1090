@@ -8,9 +8,12 @@ html, body {
     bottom: 0;
     width: 100%;
     padding: 10px 12px;
-    align-content: center;
     border: 1px solid #ccc;
     background-color: #f1f1f1;
+}
+
+.center {
+    text-align: center;
 }
 
 .padding {
@@ -18,78 +21,78 @@ html, body {
 }
 
 .row {
-  display: flex; /* all_large2 */
-  flex-wrap: wrap;
-  padding: 0 0px;
-  margin-right: 0px;
-  margin-left: 0px;
+    display: flex; /* all_large2 */
+    flex-wrap: wrap;
+    padding: 0 0px;
+    margin-right: 0px;
+    margin-left: 0px;
 }
 
 .panel-body {
-  padding: 10px 10px;
+    padding: 10px 10px;
 }
 
 .column {
-  flex: 50%; /* all_large */
-  max-width: 100%;
-  padding: 10px 10px;
+    flex: 50%; /* all_large */
+    max-width: 100%;
+    padding: 10px 10px;
 }
 
 .column img {
-  vertical-align: middle;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+    vertical-align: middle;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 @media screen and (max-width: 1000px) {
-  .column {
-    flex: 100%;
-    max-width: 100%;
-  }
+    .column {
+      flex: 100%;
+      max-width: 100%;
+    }
 }
 
 /* Style the tab */
 .tab {
-  overflow: hidden;
-  border: 1px solid #ccc;
-  background-color: #f1f1f1;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
 }
 
 /* Style the buttons that are used to open the tab content */
 .tab button {
-  background-color: inherit;
-  float: left;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 10px 12px;
-  transition: 0.3s;
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 10px 12px;
+    transition: 0.3s;
 }
 
 /* Change background color of buttons on hover */
 .tab button:hover {
-  background-color: #ddd;
+    background-color: #ddd;
 }
 
 /* Create an active/current tablink class */
 .tab button.active {
-  background-color: #ccc;
+    background-color: #ccc;
 }
 
 /* Style the tab content */
 .tabcontent {
-  display: none;
-  padding: 6px 6px;
-  border: 1px solid #ccc;
-  border-top: none;
-  width: 100%;
-  height: 100%;
+    display: none;
+    padding: 6px 6px;
+    border: 1px solid #ccc;
+    border-top: none;
+    width: 100%;
+    height: 100%;
 }
 
 /* Style the iframe to flex to fit */
 #tabcontent-iframe {
-  display: flex;
-  height: 100%;
-  width: 100%;
+    display: flex;
+    height: 100%;
+    width: 100%;
 }
