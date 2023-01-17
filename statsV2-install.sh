@@ -53,7 +53,7 @@ function APT_INSTALL()
 
     package="$1";
     echo "RUN APT_INSTALL $pacakge";
-    
+
     apt-get install -y --no-install-suggests --no-install-recommends $package
 
 	if ! command -v "$CMD" &>/dev/null; then
@@ -344,11 +344,13 @@ trap 'echo "[ERROR] Error in line $LINENO when executing: $BASH_COMMAND"' ERR
 renice 10 $$
 
 if [[ -z "$1" ]]; then
+
     echo "statsV2-install.sh needs 1 argument"
     echo "example: statsV2-install.sh install"
     echo "example: statsV2-install.sh update"
     echo "example: statsV2-install.sh uninstall"
-elif [[ "$1" == "install" ]]; then
+
+elif "$1" == "install"; then
 
     echo $LINE_BREAK
     echo "START INSTALL"
@@ -360,7 +362,7 @@ elif [[ "$1" == "install" ]]; then
     echo "FINISH INSTALL"
     echo $LINE_BREAK
 
-elif [[ "$1" == "update" ]]; then
+elif "$1" == "update"; then
 
     echo $LINE_BREAK
     echo "START UPDATE"
@@ -372,7 +374,7 @@ elif [[ "$1" == "update" ]]; then
     echo "FINISH UPDATE"
     echo $LINE_BREAK
 
-elif [[ "$1" == "uninstall" ]]; then
+elif "$1" == "uninstall"; then
 
     echo $LINE_BREAK
     echo "START UNINSTALL"
