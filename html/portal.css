@@ -16,14 +16,6 @@ html, body {
     text-align: center;
 }
 
-.padding-header {
-    height: 32px;
-}
-
-.padding-footer {
-    height: 32px;
-}
-
 .padding {
     height: 15px;
 }
@@ -94,7 +86,7 @@ html, body {
 /* Style the tab content */
 .tabcontent {
     display: none;
-    padding: 32px 6px;
+    padding: 38px 6px;
     border: 1px solid #ccc;
     border-top: none;
     width: 100%;
