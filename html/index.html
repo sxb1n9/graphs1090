@@ -69,8 +69,10 @@
 
 		<!-- HELP TAB CONTENT-->
 		<div id="HELP" class="tabcontent">
-			sudo systemctl status piaware
-			<a href="https://flightaware.com/adsb/stats/user/b1n9#stats-117494">flightaware stats</a>
+			piaware restart service
+				sudo systemctl status piaware
+			tar1090 update
+				sudo bash -c "$(wget -nv -O - https://github.com/wiedehopf/tar1090/raw/master/install.sh)"
 		</div>
 
 		<!-- STATSV2 TAB CONTENT-->
