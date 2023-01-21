@@ -20,6 +20,10 @@ html, body {
   height: 32px;
 }
 
+.padding-footer {
+    height: 32px;
+}
+
 .padding {
     height: 15px;
 }
